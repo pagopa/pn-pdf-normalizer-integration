@@ -1,0 +1,201 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Storage resources for pn-pdf-normalizer-integration
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: pn
+  EnvType:
+    Type: String
+    AllowedValues:
+      - dev
+      - test
+      - uat
+      - hotfix
+      - prod
+  TemplateBucketBaseUrl:
+    Type: String
+  Version:
+    Type: String
+  LogRetention:
+    Type: Number
+    Default: 14
+  LogsKinesisSourceStreamArn:
+    Type: String
+    Default: ''
+  PdfRasterVpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: PdfRaster VPC id
+  PdfRasterVpcSubnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: PdfRaster private subnets
+  PdfRasterVpcCidr:
+    Type: String
+    Description: Source VPC CIDR block for RDS ingress rule
+  AlarmSNSTopicArn:
+    Type: String
+    Description: ARN of the shared SNS topic for alarms
+  RdsClusterIdentifierSuffix:
+    Type: String
+    Description: Suffix to make RDS cluster unique
+    Default: pdf-normalizer-db
+  RdsDatabaseName:
+    Type: String
+    Default: pdf_normalizer_db
+  RdsMasterUsername:
+    Type: String
+    Default: dbadmin
+    NoEcho: true
+  RdsSvcUsername:
+    Type: String
+    Default: beyondoc_svc
+    NoEcho: true
+  RdsEngineVersion:
+    Type: String
+    Default: '14.12'
+  RdsDbClusterFamily:
+    Type: String
+    Default: aurora-postgresql14
+  RdsMinACU:
+    Type: Number
+    Default: 0.5
+  RdsMaxACU:
+    Type: Number
+    Default: 2
+  RdsBackupRetentionPeriod:
+    Type: Number
+    Default: 7
+  RdsDeletionProtection:
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+  RdsDbCpuAlarmThreshold:
+    Type: Number
+    Default: 80
+  RdsDbConnectionsAlarmThreshold:
+    Type: Number
+    Default: 1500
+
+Conditions:
+  HasLogsKinesisStream: !Not
+    - !Equals
+      - !Ref LogsKinesisSourceStreamArn
+      - ''
+
+Resources:
+  NormalizedPDFHookLambdaLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/log-group.yaml
+      Parameters:
+        LogGroupName: !Sub pn-pdf-normalizer-integration-NormalizedPDFHook
+        LogGroupRetention: !Ref LogRetention
+        LogGroupPrefix: /aws/lambda
+        LogsKinesisSourceStreamArn: !If
+          - HasLogsKinesisStream
+          - !Ref LogsKinesisSourceStreamArn
+          - !Ref AWS::NoValue
+
+  BeyondocPdfRemediationLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/log-group.yaml
+      Parameters:
+        LogGroupName: !Sub pn-pdf-normalizer-integration-BeyondocPdfRemediation
+        LogGroupRetention: !Ref LogRetention
+        LogGroupPrefix: /aws/ecs
+        LogsKinesisSourceStreamArn: !If
+          - HasLogsKinesisStream
+          - !Ref LogsKinesisSourceStreamArn
+          - !Ref AWS::NoValue
+
+  BeyondocWorkerLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/log-group.yaml
+      Parameters:
+        LogGroupName: !Sub pn-pdf-normalizer-integration-BeyondocWorker
+        LogGroupRetention: !Ref LogRetention
+        LogGroupPrefix: /aws/ecs
+        LogsKinesisSourceStreamArn: !If
+          - HasLogsKinesisStream
+          - !Ref LogsKinesisSourceStreamArn
+          - !Ref AWS::NoValue
+
+  PnPdfNormalizerAuroraDbCluster:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/aurora-serverless-v2-pg.yaml
+      Parameters:
+        EnvType: !Ref EnvType
+        VpcId: !Ref PdfRasterVpcId
+        PrivateSubnets: !Join
+          - ','
+          - !Ref PdfRasterVpcSubnets
+        SourceVpcCidr: !Ref PdfRasterVpcCidr
+        ClusterIdentifierSuffix: !Ref RdsClusterIdentifierSuffix
+        DatabaseName: !Ref RdsDatabaseName
+        MasterUsername: !Ref RdsMasterUsername
+        SvcUsername: !Ref RdsSvcUsername
+        EngineVersion: !Ref RdsEngineVersion
+        DbClusterFamily: !Ref RdsDbClusterFamily
+        MinACU: !Ref RdsMinACU
+        MaxACU: !Ref RdsMaxACU
+        BackupRetentionPeriod: !Ref RdsBackupRetentionPeriod
+        DeletionProtectionEnabled: !Ref RdsDeletionProtection
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        DbCpuAlarmThreshold: !Ref RdsDbCpuAlarmThreshold
+        DbConnectionsAlarmThreshold: !Ref RdsDbConnectionsAlarmThreshold
+        # SourceSecurityGroupIdForDbAccess: not in use, tbd
+
+Outputs:
+  NormalizedPDFHookLogGroupName:
+    Description: Log Group name for the NormalizedPDFHook Lambda
+    Value: !GetAtt NormalizedPDFHookLambdaLogGroup.Outputs.LogGroupName
+  BeyondocPdfRemediationLogGroupName:
+    Description: Log Group name for the Beyondoc Pdf Remediation service
+    Value: !GetAtt BeyondocPdfRemediationLogGroup.Outputs.LogGroupName
+  BeyondocWorkerLogGroupName:
+    Description: Log Group name for the Beyondoc Worker service
+    Value: !GetAtt BeyondocWorkerLogGroup.Outputs.LogGroupName
+  RdsEndpointAddress:
+    Description: RDS Cluster Writer Endpoint Address
+    Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.RdsEndpointAddress
+  RdsReadEndpointAddress:
+    Description: RDS Cluster Reader Endpoint Address
+    Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.RdsReadEndpointAddress
+  RdsPort:
+    Description: RDS Cluster Port
+    Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.RdsPort
+  RdsDbName:
+    Description: RDS Database Name
+    Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.RdsDbName
+  #   RdsMasterUserSecretArn:
+  #     Description: "ARN of the Secret Manager secret for RDS master user"
+  #     Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.RdsMasterUserSecretArn
+  RdsSecurityGroupId:
+    Description: ID of the Security Group attached to the RDS cluster
+    Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.RdsSecurityGroupId
+  DBClusterArn:
+    Description: ARN of the DB Cluster
+    Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.DBClusterArn
+  DBClusterResourceId:
+    Description: Resource ID of the DB Cluster
+    Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.DBClusterResourceId
+  SvcUserSecretArn:
+    Description: ARN of the placeholder secret for service user
+    Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.SvcUserSecretArn
+  SvcUsername:
+    Description: service user Username
+    Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.SvcUsername
+  RdsClusterIdentifierSuffix:
+    Description: Suffix used for RDS cluster identifier
+    Value: !Ref RdsClusterIdentifierSuffix

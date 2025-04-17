@@ -1,0 +1,14 @@
+{
+    "name": "normalizedpdfhook-handler",
+    "version": "1.0.0",
+    "description": "Example Lambda handler for NormalizedPDFHook ALB callback",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"No tests defined\"",
+      "build": "zip -r function.zip index.js node_modules || zip function.zip index.js",
+      "test-build": "npm run test && npm run build"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {}
+  }
