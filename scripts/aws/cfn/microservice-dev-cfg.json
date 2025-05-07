@@ -1,7 +1,7 @@
 {
   "Parameters": {
-    "BeyondocPdfRemediationImageUri": "public.ecr.aws/docker/library/tomcat:9.0.104-jdk21-corretto",
-    "BeyondocWorkerImageUri": "public.ecr.aws/docker/library/tomcat:9.0.104-jdk21-corretto",
+    "BeyondocPdfRemediationImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/pdf-remediation-service:main-1.0.1",
+    "BeyondocWorkerImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/worker-service:main-1.0.4",
 
     "NormalizedPDFHookReservedConcurrency": "1",
 
