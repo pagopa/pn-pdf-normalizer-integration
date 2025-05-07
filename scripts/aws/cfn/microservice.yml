@@ -22,11 +22,9 @@ Parameters:
   BucketBasePath:
     Type: String
   BeyondocPdfRemediationImageUri:
-    Type: String
-    Default: public.ecr.aws/docker/library/tomcat:9.0.104-jdk21-corretto 
+    Type: String 
   BeyondocWorkerImageUri:
     Type: String
-    Default: public.ecr.aws/docker/library/tomcat:9.0.104-jdk21-corretto 
   TemplateBucketBaseUrl:
     Type: String
   AlarmSNSTopicArn:
@@ -73,7 +71,7 @@ Parameters:
     Default: NormalizedPDFHook
   NormalizedPDFHookReservedConcurrency:
     Type: Number
-    Default: 5 
+    Default: 5
   NormalizedPDFHookMemorySize:
     Type: Number
     Default: 512
@@ -82,10 +80,10 @@ Parameters:
     Default: 60
   LambdaAlbPath:
     Type: String
-    Default: /NotifyOutputPDFUploaded 
+    Default: /NotifyOutputPDFUploaded
   LambdaAlbPriority:
     Type: Number
-    Default: 105 
+    Default: 105
   LambdaListenerPort:
     Type: Number
     Default: 8080
@@ -485,8 +483,9 @@ Resources:
   BeyondocWorkerEcsResources:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/ecs-service.yaml
+      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/ecs-service-v2.yaml
       Parameters:
+        DisableAlbIntegration: true
         MicroServiceUniqueName: pn-pdf-normalizer-worker
         ECSClusterName: !Ref PdfRasterECSClusterName
         ContainerImageURI: !Ref BeyondocWorkerImageUri
@@ -497,9 +496,7 @@ Resources:
         VpcId: !Ref PdfRasterVpcId
         Subnets: !Ref PdfRasterVpcSubnets
         EcsDefaultSecurityGroup: !Ref EcsPdfNormalizerDefaultSecurityGroup
-        LoadBalancerListenerArn: !Ref PdfRasterApplicationLoadBalancerListenerArn
         MappedPaths: /doc-worker-service/* #placeholder tbd
-        LoadbalancerRulePriority: !Ref WorkerAlbPriority
         AlbSecurityGroup: ''
         AutoscalingStrategy: !Ref WorkerScalingStrategy
         MinTasksNumber: !Ref BeyondocWorkerMinTasks
@@ -623,7 +620,6 @@ Resources:
       OKActions:
         - !Ref AlarmSNSTopicArn
       TreatMissingData: breaching
-
   BeyondocWorkerMemoryNotifyAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
