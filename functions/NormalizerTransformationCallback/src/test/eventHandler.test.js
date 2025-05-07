@@ -3,7 +3,7 @@ const { S3Client, GetObjectTaggingCommand, DeleteObjectCommand } = require("@aws
 const proxyquire = require("proxyquire").noPreserveCache();
 const { expect } = require("chai");
 
-const s3MockClient = mockClient(S3Client);
+let s3MockClient = mockClient(S3Client);
 
 describe("NormalizerTransformationCallback", () => {
   let capturedTagging;

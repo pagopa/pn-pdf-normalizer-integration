@@ -27,14 +27,12 @@ exports.handleEvent = async function(event) {
 
         await Promise.allSettled(
             event.Records.map(async (record) => {
-                    const bodyData = JSON.parse(record.body);
+                const bodyData = JSON.parse(record.body);
 
-                    checkResult = bodyData.checkResult;
-                    mainErrorReason = bodyData.mainErrorReason;
-                    outputPath = bodyData.outputPath;
-                    correlationId = bodyData.correlationId;
-
-
+                checkResult = bodyData.checkResult;
+                mainErrorReason = bodyData.mainErrorReason;
+                outputPath = bodyData.outputPath;
+                correlationId = bodyData.correlationId;
 
                 const parsedUri = parseS3Uri(outputPath);
 
@@ -44,8 +42,6 @@ exports.handleEvent = async function(event) {
                 } else {
                     console.error("L'URI S3 non è valido:", outputPath);
                 }
-
-
 
                 const tagResponse = await s3.send(new GetObjectTaggingCommand({
                     Bucket: BUCKET_NAME,
@@ -75,25 +71,20 @@ exports.handleEvent = async function(event) {
                     const command = new PutObjectTaggingCommand(tagSettings);
                     const response = await client.send(command);
 
-                    //continue;
                 }
-
 
             })
         );
 
-
-
-
-    return {
-        statusCode: 200,
-        body: "Process completed successfully!"
-    };
-} catch (error) {
-    console.error("Error:", error);
-    return {
-        statusCode: 500,
-        body: "Error during antivirus processing."
-    };
-}
+        return {
+            statusCode: 200,
+            body: "Process completed successfully!"
+        };
+    } catch (error) {
+        console.error("Error:", error);
+        return {
+            statusCode: 500,
+            body: "Error during normalization processing."
+        };
+    }
 };
