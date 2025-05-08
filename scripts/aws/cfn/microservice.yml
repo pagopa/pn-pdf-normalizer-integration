@@ -4,7 +4,7 @@ Description: Microservice resources for pn-pdf-normalizer-integration
 Parameters:
   ProjectName:
     Type: String
-    Default: pn 
+    Default: pn
   EnvType:
     Type: String
     AllowedValues:
@@ -13,16 +13,16 @@ Parameters:
       - uat
       - hotfix
       - prod
-    Default: dev 
+    Default: dev
   Version:
     Type: String
-    Default: '' 
+    Default: ''
   LambdasBucketName:
     Type: String
   BucketBasePath:
     Type: String
   BeyondocPdfRemediationImageUri:
-    Type: String 
+    Type: String
   BeyondocWorkerImageUri:
     Type: String
   TemplateBucketBaseUrl:
@@ -449,7 +449,7 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         # Database configuration
         ContainerEnvEntry1: !Sub DB_URL=jdbc:postgresql://${RdsEndpointAddress}:${RdsPort}/${RdsDbName}
-        ContainerEnvEntry2: !Sub DB_USER=${SvcUsername}
+        ContainerEnvEntry2: !Sub DB_USERNAME=${SvcUsername}
         ContainerEnvEntry3: DB_DRIVER_CLASS=org.postgresql.Driver
         # HikariCP configuration
         ContainerEnvEntry4: HIKARI_MAX_POOL_SIZE=5
@@ -507,7 +507,7 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         # Database configuration
         ContainerEnvEntry1: !Sub DB_URL=jdbc:postgresql://${RdsEndpointAddress}:${RdsPort}/${RdsDbName}
-        ContainerEnvEntry2: !Sub DB_USER=${SvcUsername}
+        ContainerEnvEntry2: !Sub DB_USERNAME=${SvcUsername}
         ContainerEnvEntry3: DB_DRIVER_CLASS=org.postgresql.Driver
         # HikariCP configuration
         ContainerEnvEntry4: HIKARI_MAX_POOL_SIZE=5
