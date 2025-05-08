@@ -66,7 +66,7 @@ class FakeS3ClientError500 {
   send(command) {
     if (command instanceof GetObjectTaggingCommand) {
       // Simuliamo che il tag "Transformation-NORMALIZATION" NON sia presente
-      return Promise.reject({});
+      return Promise.reject(new Error("internal server error"));
     } else if (command instanceof PutObjectTaggingCommand) {
       // Cattura il comando per le asserzioni
       capturedTagging = command;
