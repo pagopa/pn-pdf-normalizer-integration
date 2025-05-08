@@ -48,7 +48,7 @@ const callBeyonDocApi = async (beyonDocApiUrl, inputPath, margins) => {
       margins: parseInt(margins, 10),
     };
 
-    console.log(`Chiamata all'API BeyonDoc: ${beyonDocApiUrl}/beyondoc/api/v1/notify-input-pdf-uploaded with payload:`, payload);
+    console.log(`Chiamata all'API BeyonDoc: ${beyonDocApiUrl} with payload:`, payload);
 
     const options = {
       method: 'POST',
