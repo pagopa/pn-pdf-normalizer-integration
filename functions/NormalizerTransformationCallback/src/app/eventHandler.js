@@ -20,10 +20,12 @@ exports.handleEvent = async function(event) {
                 const outputPath = bodyData.outputPath;
 
                 const parsedUri = parseS3Uri(outputPath);
-                if (!parsedUri) {
-                    console.error("L'URI S3 non è valido:", outputPath);
-                    return;
+                
+                if (!parsedUri || parsedUri === "") {
+                    throw new Error(`Invalid S3 URI: ${outputPath}`);
                 }
+
+                console.log("Normalization CheckResult:", checkResult);
 
                 const BUCKET_NAME = parsedUri.bucket;
                 const FILE_KEY = parsedUri.key;
@@ -34,13 +36,15 @@ exports.handleEvent = async function(event) {
                     Key: FILE_KEY
                 }));
 
+                console.log("Tag response:", tagResponse);
+
                 // Cerca se il tag "Transformation-NORMALIZATION" è già presente
                 const normalizationTag = tagResponse.TagSet.find(tag => tag.Key === "Transformation-NORMALIZATION");
+                
+                console.log("Normalization tag found:", normalizationTag);
 
                 if (!normalizationTag) {
-                    // Se il tag non esiste, aggiungiamolo
                     const tagValue = checkResult ? "OK" : "ERROR";
-
                     const tagSettings = {
                         Bucket: BUCKET_NAME,
                         Key: FILE_KEY,
@@ -51,27 +55,35 @@ exports.handleEvent = async function(event) {
                             }],
                         }
                     };
-
-                    // Aggiungi il nuovo tag
                     const command = new PutObjectTaggingCommand(tagSettings);
                     await s3.send(command);
-
-                    console.log("nuovo Tag impostato", tagSettings.Tagging.TagSet)
+                    console.log("New Tag Set:", tagSettings.Tagging.TagSet);
                 } else {
-                    console.log("Il tag 'Transformation-NORMALIZATION' è già presente, nessuna azione necessaria.");
+                    console.log("The 'Transformation-NORMALIZATION' tag is already present, no action needed.");
                 }
             })
         );
 
         return {
             statusCode: 200,
-            body: "Process completed successfully!"
         };
     } catch (error) {
-        console.error("Error:", error);
-        return {
+        console.log("Caught error:", error);
+      
+        const errorCode = error?.code || error?.Code || error?.name;
+        console.log("ERRORCODE :", error.code);
+      
+        if (errorCode === 'NoSuchBucket' || errorCode === 'NoSuchKey') {
+            return {
+            statusCode: 400,
+            body: errorCode
+          };
+        } else {
+          return {
             statusCode: 500,
             body: "Error during normalization processing."
-        };
-    }
+          };
+        }
+      }
+      
 };

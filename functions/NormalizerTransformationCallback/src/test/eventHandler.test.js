@@ -1,10 +1,16 @@
 const { expect } = require("chai");
+const { mockClient } = require("aws-sdk-client-mock");
+
+
+
 const proxyquire = require("proxyquire").noPreserveCache();
 const {
+  S3Client,
   GetObjectTaggingCommand,
   PutObjectTaggingCommand,
-  DeleteObjectCommand
+  DeleteObjectCommand,
 } = require("@aws-sdk/client-s3");
+
 
 // Variabile per catturare il comando inviato
 let capturedTagging = null;
@@ -16,6 +22,7 @@ let fakeParseS3Uri = {
     key: "PAC/test.pdf"
   })
 };
+
 
 // Finto client S3
 class FakeS3Client {
@@ -36,18 +43,24 @@ class FakeS3Client {
   }
 }
 
+let s3MockClient;
 describe("NormalizerTransformationCallback", () => {
+  const s3Mock = mockClient(S3Client); // Crea il mock UNA VOLTA sola
+
   beforeEach(() => {
     capturedTagging = null;
+    s3Mock.reset();
+
   });
 
   afterEach(() => {
     delete process.env.BEYONDOC_API_URL;
     delete process.env.PnSsGestoreRepositoryProtocol;
     delete process.env.NORMALIZER_MARGINS;
+
   });
 
-  it("test ok - checkResult true", async () => {
+  it("Imposto Transformation-NORMALIZATION = OK ricevendo checkResult= true", async () => {
     const lambda = proxyquire("../app/eventHandler.js", {
       "@aws-sdk/client-s3": {
         S3Client: FakeS3Client,
@@ -73,14 +86,14 @@ describe("NormalizerTransformationCallback", () => {
     const result = await lambda.handleEvent(fakeEvent);
 
     expect(result.statusCode).to.equal(200);
-    expect(result.body).to.equal("Process completed successfully!");
+
 
     // Verifica che il comando di tagging contenga i tag
     expect(capturedTagging).to.not.be.undefined;
 
   });
 
-  it("test errore - checkResult false", async () => {
+  it("Imposto Transformation-NORMALIZATION = Error ricevendo checkResult=false", async () => {
     class FakeS3ClientWithTagging {
       send(command) {
         if (command instanceof GetObjectTaggingCommand) {
@@ -120,7 +133,6 @@ describe("NormalizerTransformationCallback", () => {
     const result = await lambda.handleEvent(fakeEvent);
 
     expect(result.statusCode).to.equal(200);
-    expect(result.body).to.equal("Process completed successfully!");
     console.log(result)
     // Verifica che i tag siano stati aggiunti correttamente
     expect(capturedTagging).to.not.be.undefined;
@@ -167,6 +179,42 @@ describe("NormalizerTransformationCallback", () => {
     const result = await lambda.handleEvent(fakeEvent);
 
     expect(result.statusCode).to.equal(200);
-    expect(result.body).to.equal("Process completed successfully!");
   });
+
+
+
+
+
+  //TO-DO test errore 400 e 500
+  // it("should return 400 for NoSuchKey error", async () => {
+  //   // Simula errore GetObjectTaggingCommand
+  //   s3Mock.on(GetObjectTaggingCommand).rejects({
+  //     code: 'NoSuchKey',
+  //     message: 'The specified key does not exist.'
+  //   });
+
+  //   // Carica la lambda SENZA sovrascrivere S3Client
+  //   const lambda = proxyquire("../app/eventHandler.js", {
+  //     "@aws-sdk/util-uri-escape": { parseS3Uri: fakeParseS3Uri.parse }
+  //   });
+
+  //   const fakeEvent = {
+  //     Records: [{
+  //       body: JSON.stringify({
+  //         checkResult: true,
+  //         mainErrorReason: "",
+  //         outputPath: "s3://openshift-pam-bucket/PAC/test.pdf",
+  //         correlationId: "test-id"
+  //       }),
+  //       messageId: "msg-123"
+  //     }]
+  //   };
+
+  //   const res = await lambda.handleEvent(fakeEvent);
+
+  //   expect(res.statusCode).to.equal(400);
+  //   expect(res.body).to.include('NoSuchKey');
+  // });
+
+
 });
