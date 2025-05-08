@@ -268,7 +268,7 @@ describe("NormalizerTransformationCallback", () => {
 
     expect(res.statusCode).to.equal(500);
   });
-  it("should return 400 for NoSuchKey error", async () => {
+  it("torniamo 400 per NoSuchKey ", async () => {
     // Simula errore GetObjectTaggingCommand
     s3Mock.on(GetObjectTaggingCommand).rejects({
       code: 'NoSuchKey',
