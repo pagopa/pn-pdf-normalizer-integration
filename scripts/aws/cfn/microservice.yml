@@ -107,7 +107,7 @@ Parameters:
     Default: 2GB 
   RemediationAlbPath:
     Type: String
-    Default: /notify-input-pdf-uploaded
+    Default: /beyondoc/api/v1/notify-input-pdf-uploaded*
   RemediationAlbPriority:
     Type: Number
     Default: 110 

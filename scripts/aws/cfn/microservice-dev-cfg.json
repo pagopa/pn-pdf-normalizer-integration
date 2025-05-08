@@ -10,6 +10,8 @@
     "BeyondocWorkerCpu": "1024",
     "BeyondocWorkerMemory": "2GB",
 
+    "RemediationAlbPath": "/beyondoc/api/v1/notify-input-pdf-uploaded*",
+
     "RemediationScalingStrategy": "REST-API",
     "BeyondocPdfRemediationMinTasks": "1",
     "BeyondocPdfRemediationMaxTasks": "1",
