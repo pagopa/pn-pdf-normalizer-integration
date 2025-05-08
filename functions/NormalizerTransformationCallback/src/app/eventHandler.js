@@ -1,25 +1,12 @@
 "use strict";
 const {
     S3Client,
-    CopyObjectCommand,
     GetObjectTaggingCommand,
-    DeleteObjectCommand
+    PutObjectTaggingCommand
 } = require("@aws-sdk/client-s3");
-const {
-    parseS3Uri
-} = require("@aws-sdk/util-uri-escape");
+const { parseS3Uri } = require("@aws-sdk/util-uri-escape");
 
-const s3 = new S3Client();
-
-const BUCKET_NAME = "";
-const FILE_KEY = "";
-
-let checkResult = "";
-let mainErrorReason = "";
-let outputPath = "";
-let correlationId = "";
-
-let tagValue = "";
+const s3 = new S3Client({});
 
 exports.handleEvent = async function(event) {
     try {
@@ -29,50 +16,50 @@ exports.handleEvent = async function(event) {
             event.Records.map(async (record) => {
                 const bodyData = JSON.parse(record.body);
 
-                checkResult = bodyData.checkResult;
-                mainErrorReason = bodyData.mainErrorReason;
-                outputPath = bodyData.outputPath;
-                correlationId = bodyData.correlationId;
+                const checkResult = bodyData.checkResult;
+                const outputPath = bodyData.outputPath;
 
                 const parsedUri = parseS3Uri(outputPath);
-
-                if (parsedUri) {
-                    BUCKET_NAME = parsedUri.bucket;
-                    FILE_KEY = parsedUri.key;
-                } else {
+                if (!parsedUri) {
                     console.error("L'URI S3 non è valido:", outputPath);
+                    return;
                 }
 
+                const BUCKET_NAME = parsedUri.bucket;
+                const FILE_KEY = parsedUri.key;
+
+                // Recupera i tag esistenti
                 const tagResponse = await s3.send(new GetObjectTaggingCommand({
                     Bucket: BUCKET_NAME,
                     Key: FILE_KEY
                 }));
 
+                // Cerca se il tag "Transformation-NORMALIZATION" è già presente
                 const normalizationTag = tagResponse.TagSet.find(tag => tag.Key === "Transformation-NORMALIZATION");
+
                 if (!normalizationTag) {
+                    // Se il tag non esiste, aggiungiamolo
+                    const tagValue = checkResult ? "OK" : "ERROR";
 
-                    if (checkResult) {
-                        tagValue = "OK";
-                    } else {
-                        tagValue = "ERROR";
-                    }
-
-                    let tagSettings = {
+                    const tagSettings = {
                         Bucket: BUCKET_NAME,
                         Key: FILE_KEY,
                         Tagging: {
                             TagSet: [{
                                 Key: "Transformation-NORMALIZATION",
                                 Value: tagValue,
-                            }, ],
+                            }],
                         }
                     };
 
+                    // Aggiungi il nuovo tag
                     const command = new PutObjectTaggingCommand(tagSettings);
-                    const response = await client.send(command);
+                    await s3.send(command);
 
+                    console.log("nuovo Tag impostato", tagSettings.Tagging.TagSet)
+                } else {
+                    console.log("Il tag 'Transformation-NORMALIZATION' è già presente, nessuna azione necessaria.");
                 }
-
             })
         );
 
