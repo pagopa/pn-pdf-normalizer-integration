@@ -251,9 +251,6 @@ Parameters:
   PnPdfNormalizerTransformationCallbackTimeout:
     Type: Number
     Default: 60
-  PnPdfNormalizerTransformationCallbackLogGroupName:
-    Type: String
-    Description: Log Group name for Lambda (from storage stack)
   PnPdfNormalizerTransformationCallbackLambdaAlbPath:
     Type: String
     Description: Path for the PnPdfNormalizerTransformationCallback Lambda
