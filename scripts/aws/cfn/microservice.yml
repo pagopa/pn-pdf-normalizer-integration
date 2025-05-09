@@ -43,6 +43,8 @@ Parameters:
     Type: String
   PdfRasterDefaultSecurityGroup:
     Type: String
+  ServiceEndpointToPdfRaster:
+    Type: String
   RdsEndpointAddress:
     Type: String
     Description: RDS Cluster Endpoint Address (from storage stack)
@@ -62,10 +64,10 @@ Parameters:
     Type: String
     Description: ID of the Security Group attached to the RDS cluster (from storage stack)
   BeyondocApiUrl:
-      type: String
+      Type: String
       Description: Url API BEYONDOC
   NormalizerMargins:
-      type: String
+      Type: String
       Description: Margin Default Pdf
   PnSsStagingBucketPrefix:
     Type: String
@@ -78,6 +80,9 @@ Parameters:
     Type: String
     Description: 'Nome della Lambda function che gestisce i messaggi in entrata dalla coda pn-pdf-normalizer-transformation-queue'
     Default: 'NormalizerTransformationHandler'
+  PnPdfNormalizerTransformationQueue:
+    Type: String
+    Description: 'Queue name for the normalization queue'
   NormalizedPDFHookLambdaName:
     Type: String
     Default: NormalizedPDFHook
@@ -333,8 +338,10 @@ Resources:
               - 'kms:Encrypt'
               - 'kms:Decrypt'
               - 'kms:GenerateDataKey'
-            Resource:
-              - !Ref PnSsKmsArnBucket
+            Resource: '*'
+            Condition:
+              StringEquals:
+                aws:ResourceTag/KeyType: !Ref PnSsKmsKeyTagValue
 
 
 
@@ -376,7 +383,7 @@ Resources:
       ReservedConcurrentExecutions: !Ref NormalizerTransformationHandlerReservedConcurrency
       Environment:
         Variables:
-          BEYONDOC_API_URL: !Sub ${BeyondocApiUrl}
+          BEYONDOC_API_URL: !Sub ${ServiceEndpointToPdfRaster}${BeyondocApiUrl}
           NORMALIZER_MARGINS : !Sub ${NormalizerMargins}
       Tags:
         - Key: Name
@@ -753,9 +760,9 @@ Outputs:
   NormalizedPDFHookLambdaArn:
     Description: ARN of the NormalizedPDFHook Lambda function
     Value: !GetAtt NormalizedPDFHookLambda.Arn
-  NormalizerTransformationHandler:
+  NormalizerTransformationHandlerArn:
     Description: ARN of the NormalizerTransformationHandler Lambda function
-    Value: !GetAtt NormalizerTransformationHandler.Arn
+    Value: !GetAtt PnPdfNormalizerTransformationHandlerLambda.Arn
   LambdaTargetGroupArn:
     Description: ARN of the Target Group for the Lambda
     Value: !Ref LambdaTargetGroup
