@@ -31,7 +31,8 @@
     "RemediationAlbPriority": "110",
 
     "EcsMemoryAlarmThreshold": "90",
-
-    "PnPdfNormalizerTransformationCallbackLambdaAlbPath": "/beyondoc/api/v1/notify-output-pdf-uploaded"
+    "PnPdfNormalizerTransformationCallbackLambdaAlbPath": "/beyondoc/api/v1/notify-output-pdf-uploaded",
+    "BeyondocApiUrl" : "/beyondoc/api/v1/notify-input-pdf-uploaded",
+    "NormalizerMargins" : "2"
   }
 }
