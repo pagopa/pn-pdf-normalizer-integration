@@ -218,6 +218,15 @@ Parameters:
   PnPdfNormalizerTransformationCallbackLambdaName:
     Type: String
     Default: NormalizerTransformationCallback
+  PnPdfNormalizerTransformationCallbackReservedConcurrency:
+    Type: Number
+    Default: 5
+  PnPdfNormalizerTransformationCallbackMemorySize:
+    Type: Number
+    Default: 512
+  PnPdfNormalizerTransformationCallbackTimeout:
+    Type: Number
+    Default: 60
   PnPdfNormalizerTransformationCallbackLogGroupName:
     Type: String
     Description: Log Group name for Lambda (from storage stack)
