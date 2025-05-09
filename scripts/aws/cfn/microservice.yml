@@ -82,7 +82,7 @@ Parameters:
     Default: 60
   LambdaAlbPath:
     Type: String
-    Default: /NotifyOutputPDFUploaded 
+    Default: /NotifyOutputPDFUploaded
   LambdaAlbPriority:
     Type: Number
     Default: 105 
@@ -215,6 +215,14 @@ Parameters:
     Type: String
     Description: Log Group name for doc-worker-service (from storage stack)
 
+  PnPdfNormalizerTransformationCallbackLambdaName:
+    Type: String
+    Default: NormalizerTransformationCallback
+  PnPdfNormalizerTransformationCallbackLogGroupName:
+    Type: String
+    Description: Log Group name for Lambda (from storage stack)
+
+
 Conditions:
   IsRemediationScalingEnabled: !Not
     - !Equals
@@ -269,6 +277,46 @@ Resources:
               StringEquals:
                 aws:ResourceTag/KeyType: !Ref PnSsKmsKeyTagValue
 
+  PnPdfNormalizerTransformationCallbackLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub pn-pdf-normalizer-integration-PnPdfNormalizerTransformationCallbackLambdaRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  PnPdfNormalizerTransformationCallbackLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub pn-pdf-normalizer-integration-PnPdfNormalizerTransformationCallbackLambdaPolicy
+      Roles:
+        - !Ref PnPdfNormalizerTransformationCallbackLambdaRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowS3AccessSafeStorage
+            Effect: Allow
+            Action:
+              - s3:GetObject*
+              - s3:PutObjectTagging
+            Resource:
+              - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
+              - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}/*
+          - Sid: AllowKMSAccessSafeStorage
+            Effect: Allow
+            Action:
+              - kms:Decrypt
+            Resource: '*'
+            Condition:
+              StringEquals:
+                aws:ResourceTag/KeyType: !Ref PnSsKmsKeyTagValue
+
   NormalizedPDFHookLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -289,6 +337,29 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub pn-pdf-normalizer-integration-${NormalizedPDFHookLambdaName}
+        - Key: Environment
+          Value: !Ref EnvType
+
+  PnPdfNormalizerTransformationCallbackLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationCallbackLambdaName}
+      Runtime: nodejs20.x
+      Handler: index.handler
+      Role: !GetAtt PnPdfNormalizerTransformationCallbackLambdaRole.Arn
+      Code:
+        S3Bucket: !Ref LambdasBucketName
+        S3Key: !Sub ${BucketBasePath}/PnPdfNormalizerTransformationCallback.zip
+      MemorySize: !Ref PnPdfNormalizerTransformationCallbackMemorySize
+      Timeout: !Ref PnPdfNormalizerTransformationCallbackTimeout
+      ReservedConcurrentExecutions: !Ref PnPdfNormalizerTransformationCallbackReservedConcurrency
+      Environment:
+        Variables:
+          REGION: !Ref AWS::Region
+          PN_SS_STAGING_BUCKET: !Sub ${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
+      Tags:
+        - Key: Name
+          Value: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationCallbackLambdaName}
         - Key: Environment
           Value: !Ref EnvType
 
@@ -320,6 +391,22 @@ Resources:
       Actions:
         - Type: forward
           TargetGroupArn: !Ref LambdaTargetGroup
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+              - !Ref LambdaAlbPath
+
+  PnPdfNormalizerTransformationCallbackListenerRuleLambda:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref PdfRasterApplicationLoadBalancerListenerArn
+      Priority: !Ref LambdaAlbPriority
+      Actions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: 200
+            ContentType: application/json
       Conditions:
         - Field: path-pattern
           PathPatternConfig:
