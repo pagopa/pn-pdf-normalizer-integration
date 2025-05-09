@@ -31,6 +31,8 @@ exports.handleEvent = async function(event) {
                 const BUCKET_NAME = parsedUri.bucket;
                 const FILE_KEY = parsedUri.key;
 
+                const TAG_KEY = "Transformation-NORMALIZATION";
+
                 // Recupera i tag esistenti
                 const tagResponse = await s3.send(new GetObjectTaggingCommand({
                     Bucket: BUCKET_NAME,
@@ -39,7 +41,7 @@ exports.handleEvent = async function(event) {
 
 
                 // Cerca se il tag "Transformation-NORMALIZATION" è già presente
-                const normalizationTag = tagResponse.TagSet.find(tag => tag.Key === "Transformation-NORMALIZATION");
+                const normalizationTag = tagResponse.TagSet.find(tag => tag.Key === TAG_KEY);
                 
 
                 if (!normalizationTag) {
@@ -49,7 +51,7 @@ exports.handleEvent = async function(event) {
                         Key: FILE_KEY,
                         Tagging: {
                             TagSet: [{
-                                Key: "Transformation-NORMALIZATION",
+                                Key: TAG_KEY,
                                 Value: tagValue,
                             }],
                         }
