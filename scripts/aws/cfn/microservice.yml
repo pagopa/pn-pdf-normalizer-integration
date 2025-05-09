@@ -290,7 +290,7 @@ Resources:
   PnPdfNormalizerTransformationHandlerLambdaRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub pn-pdf-normalizer-integration-PnPdfNormalizerTransformationHandlerLambdaRole
+      RoleName: !Sub pn-pdf-normalizer-integration-TransformationHandlerRole
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -330,7 +330,7 @@ Resources:
   PnPdfNormalizerTransformationCallbackLambdaRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub pn-pdf-normalizer-integration-PnPdfNormalizerTransformationCallbackLambdaRole
+      RoleName: !Sub pn-pdf-normalizer-integration-TransformationCallbackRole
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
