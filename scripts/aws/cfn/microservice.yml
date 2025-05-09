@@ -383,7 +383,7 @@ Resources:
       ReservedConcurrentExecutions: !Ref NormalizerTransformationHandlerReservedConcurrency
       Environment:
         Variables:
-          BEYONDOC_API_URL: !Sub ${ServiceEndpointToPdfRaster}${BeyondocApiUrl}
+          BEYONDOC_API_URL: !Sub ${PdfRasterAlbProtocol}://${ServiceEndpointToPdfRaster}:8080${BeyondocApiUrl}
           NORMALIZER_MARGINS : !Sub ${NormalizerMargins}
       Tags:
         - Key: Name
