@@ -376,8 +376,6 @@ Resources:
       ReservedConcurrentExecutions: !Ref NormalizerTransformationHandlerReservedConcurrency
       Environment:
         Variables:
-          REGION: !Ref AWS::Region
-          PN_SS_STAGING_BUCKET: !Sub ${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
           BEYONDOC_API_URL: !Sub ${BeyondocApiUrl}
           NORMALIZER_MARGINS : !Sub ${NormalizerMargins}
       Tags:
