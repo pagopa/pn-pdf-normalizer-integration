@@ -110,10 +110,6 @@ Resources:
         LogGroupName: !Sub pn-pdf-normalizer-integration-PnPdfNormalizerTransformationCallbackLogGroupName
         LogGroupRetention: !Ref LogRetention
         LogGroupPrefix: /aws/lambda
-        LogsKinesisSourceStreamArn: !If
-          - HasLogsKinesisStream
-          - !Ref LogsKinesisSourceStreamArn
-          - !Ref AWS::NoValue
 
   BeyondocPdfRemediationLogGroup:
     Type: AWS::CloudFormation::Stack
