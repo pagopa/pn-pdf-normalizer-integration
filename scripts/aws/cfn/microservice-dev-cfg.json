@@ -30,6 +30,8 @@
     "LambdaAlbPriority": "100",
     "RemediationAlbPriority": "110",
 
-    "EcsMemoryAlarmThreshold": "90"
+    "EcsMemoryAlarmThreshold": "90",
+
+    "PnPdfNormalizerTransformationCallbackLambdaAlbPath": "/beyondoc/api/v1/notify-output-pdf-uploaded"
   }
 }

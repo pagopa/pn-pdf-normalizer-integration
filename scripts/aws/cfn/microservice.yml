@@ -230,6 +230,12 @@ Parameters:
   PnPdfNormalizerTransformationCallbackLogGroupName:
     Type: String
     Description: Log Group name for Lambda (from storage stack)
+  PnPdfNormalizerTransformationCallbackLambdaAlbPath:
+    Type: String
+    Description: Path for the PnPdfNormalizerTransformationCallback Lambda
+  PnPdfNormalizerTransformationCallbackLambdaAlbPriority:
+    Type: Number
+    Default: 105
 
 
 Conditions:
@@ -362,10 +368,6 @@ Resources:
       MemorySize: !Ref PnPdfNormalizerTransformationCallbackMemorySize
       Timeout: !Ref PnPdfNormalizerTransformationCallbackTimeout
       ReservedConcurrentExecutions: !Ref PnPdfNormalizerTransformationCallbackReservedConcurrency
-      Environment:
-        Variables:
-          REGION: !Ref AWS::Region
-          PN_SS_STAGING_BUCKET: !Sub ${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
       Tags:
         - Key: Name
           Value: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationCallbackLambdaName}
@@ -384,6 +386,18 @@ Resources:
         - Key: Environment
           Value: !Ref EnvType
 
+  PnPdfNormalizerTransformationCallbackTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub lambda-callback-tg-${EnvType}
+      TargetType: lambda
+      Targets:
+        - Id: !GetAtt PnPdfNormalizerTransformationCallbackLambda.Arn
+      HealthCheckEnabled: false
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvType
+
   LambdaInvokePermissionAlb:
     Type: AWS::Lambda::Permission
     Properties:
@@ -391,6 +405,13 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: elasticloadbalancing.amazonaws.com
       # SourceArn: placeholder tbd
+
+  PnPdfNormalizerTransformationCallbackLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt PnPdfNormalizerTransformationCallbackLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: elasticloadbalancing.amazonaws.com
 
   AlbListenerRuleLambda:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -410,17 +431,15 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       ListenerArn: !Ref PdfRasterApplicationLoadBalancerListenerArn
-      Priority: !Ref LambdaAlbPriority
+      Priority: !Ref PnPdfNormalizerTransformationCallbackLambdaAlbPriority
       Actions:
-        - Type: fixed-response
-          FixedResponseConfig:
-            StatusCode: 200
-            ContentType: application/json
+        - Type: forward
+          TargetGroupArn: !Ref PnPdfNormalizerTransformationCallbackTargetGroup
       Conditions:
         - Field: path-pattern
           PathPatternConfig:
             Values:
-              - !Ref LambdaAlbPath
+              - !Ref PnPdfNormalizerTransformationCallbackLambdaAlbPath
 
   EcsPdfNormalizerDefaultSecurityGroup:
     Type: AWS::EC2::SecurityGroup
