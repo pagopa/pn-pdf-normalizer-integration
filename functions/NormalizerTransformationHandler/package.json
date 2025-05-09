@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "chai": "^5.2.0",
+    "chai": "^4.3.6",
     "dotenv": "^16.5.0",
     "http-request-mock": "^2.0.2",
     "mocha": "^9.2.2",
