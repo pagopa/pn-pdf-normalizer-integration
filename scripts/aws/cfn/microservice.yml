@@ -239,6 +239,29 @@ Parameters:
     Type: String
     Description: Log Group name for doc-worker-service (from storage stack)
 
+  PnPdfNormalizerTransformationCallbackLambdaName:
+    Type: String
+    Default: NormalizerTransformationCallback
+  PnPdfNormalizerTransformationCallbackReservedConcurrency:
+    Type: Number
+    Default: 5
+  PnPdfNormalizerTransformationCallbackMemorySize:
+    Type: Number
+    Default: 512
+  PnPdfNormalizerTransformationCallbackTimeout:
+    Type: Number
+    Default: 60
+  PnPdfNormalizerTransformationCallbackLogGroupName:
+    Type: String
+    Description: Log Group name for Lambda (from storage stack)
+  PnPdfNormalizerTransformationCallbackLambdaAlbPath:
+    Type: String
+    Description: Path for the PnPdfNormalizerTransformationCallback Lambda
+  PnPdfNormalizerTransformationCallbackLambdaAlbPriority:
+    Type: Number
+    Default: 105
+
+
 Conditions:
   IsRemediationScalingEnabled: !Not
     - !Equals
@@ -307,6 +330,42 @@ Resources:
               StringEquals:
                 aws:ResourceTag/KeyType: !Ref PnSsKmsKeyTagValue
 
+  PnPdfNormalizerTransformationCallbackLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub pn-pdf-normalizer-integration-PnPdfNormalizerTransformationCallbackLambdaRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  PnPdfNormalizerTransformationCallbackLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub pn-pdf-normalizer-integration-PnPdfNormalizerTransformationCallbackLambdaPolicy
+      Roles:
+        - !Ref PnPdfNormalizerTransformationCallbackLambdaRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowS3AccessSafeStorage
+            Effect: Allow
+            Action:
+              - s3:GetObject*
+              - s3:PutObjectTagging
+            Resource:
+              - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
+              - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}/*
+          - Sid: AllowKMSAccessSafeStorage
+            Effect: Allow
+            Action:
+              - kms:Decrypt
+
   PnPdfNormalizerTransformationHandlerLambdaPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -338,12 +397,11 @@ Resources:
               - 'kms:Encrypt'
               - 'kms:Decrypt'
               - 'kms:GenerateDataKey'
+
             Resource: '*'
             Condition:
               StringEquals:
                 aws:ResourceTag/KeyType: !Ref PnSsKmsKeyTagValue
-
-
 
   NormalizedPDFHookLambda:
     Type: AWS::Lambda::Function
@@ -367,6 +425,23 @@ Resources:
           Value: !Sub pn-pdf-normalizer-integration-${NormalizedPDFHookLambdaName}
         - Key: Environment
           Value: !Ref EnvType
+
+  PnPdfNormalizerTransformationCallbackLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationCallbackLambdaName}
+      Runtime: nodejs20.x
+      Handler: index.handler
+      Role: !GetAtt PnPdfNormalizerTransformationCallbackLambdaRole.Arn
+      Code:
+        S3Bucket: !Ref LambdasBucketName
+        S3Key: !Sub ${BucketBasePath}/PnPdfNormalizerTransformationCallback.zip
+      MemorySize: !Ref PnPdfNormalizerTransformationCallbackMemorySize
+      Timeout: !Ref PnPdfNormalizerTransformationCallbackTimeout
+      ReservedConcurrentExecutions: !Ref PnPdfNormalizerTransformationCallbackReservedConcurrency
+      Tags:
+        - Key: Name
+          Value: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationCallbackLambdaName}
 
   PnPdfNormalizerTransformationHandlerLambda:
     Type: AWS::Lambda::Function
@@ -403,6 +478,18 @@ Resources:
         - Key: Environment
           Value: !Ref EnvType
 
+  PnPdfNormalizerTransformationCallbackTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub lambda-callback-tg-${EnvType}
+      TargetType: lambda
+      Targets:
+        - Id: !GetAtt PnPdfNormalizerTransformationCallbackLambda.Arn
+      HealthCheckEnabled: false
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvType
+
   LambdaInvokePermissionAlb:
     Type: AWS::Lambda::Permission
     Properties:
@@ -410,6 +497,13 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: elasticloadbalancing.amazonaws.com
       # SourceArn: placeholder tbd
+
+  PnPdfNormalizerTransformationCallbackLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt PnPdfNormalizerTransformationCallbackLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: elasticloadbalancing.amazonaws.com
 
   AlbListenerRuleLambda:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -424,6 +518,20 @@ Resources:
           PathPatternConfig:
             Values:
               - !Ref LambdaAlbPath
+
+  PnPdfNormalizerTransformationCallbackListenerRuleLambda:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref PdfRasterApplicationLoadBalancerListenerArn
+      Priority: !Ref PnPdfNormalizerTransformationCallbackLambdaAlbPriority
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref PnPdfNormalizerTransformationCallbackTargetGroup
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+              - !Ref PnPdfNormalizerTransformationCallbackLambdaAlbPath
 
   EcsPdfNormalizerDefaultSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -572,7 +680,7 @@ Resources:
         # Messaging configuration
         ContainerEnvEntry18: PAC_MESSAGING_ENABLED=false
         # Callback configuration
-        ContainerEnvEntry19: !Sub PAC_NOTIFY_URL=${PdfRasterAlbProtocol}://${PdfRasterApplicationLoadBalancerAwsDns}${LambdaAlbPath}
+        ContainerEnvEntry19: !Sub PAC_NOTIFY_URL=${PdfRasterAlbProtocol}://${PdfRasterApplicationLoadBalancerAwsDns}${PnPdfNormalizerTransformationCallbackLambdaAlbPath}
         # S3 configuration
         ContainerEnvEntry20: !Sub S3_BUCKET=${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
         ContainerEnvEntry21: !Sub S3_ENDPOINT=https://s3.${AWS::Region}.amazonaws.com
