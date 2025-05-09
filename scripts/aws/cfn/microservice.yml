@@ -72,9 +72,6 @@ Parameters:
     Type: String
     Description: 'Nome della Lambda function che gestisce i messaggi in entrata dalla coda pn-pdf-normalizer-transformation-queue'
     Default: 'NormalizerTransformationHandler'
-  PnPdfNormalizerTransformationQueue:
-    Type: String
-    Description: 'Nome Coda pn-pdf-normalizer-transformation-queue'
   NormalizedPDFHookLambdaName:
     Type: String
     Default: NormalizedPDFHook
@@ -567,7 +564,6 @@ Resources:
         ContainerEnvEntry20: !Sub S3_BUCKET=${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
         ContainerEnvEntry21: !Sub S3_ENDPOINT=https://s3.${AWS::Region}.amazonaws.com
         ContainerEnvEntry22: !Sub S3_REGION=${AWS::Region}
-        ContainerEnvEntry23: !Sub 'PnPdfNormalizerTransformationQueue=${PnPdfNormalizerTransformationQueue}'
         # Secret configuration
         ContainerSecret1: !Sub 'DB_PASSWORD=${SvcUserSecretArn}:password:AWSCURRENT:'
         MicroServiceSecretPrefix: pn-pdf-normalizer-db-svc-user-credentials
@@ -628,7 +624,6 @@ Resources:
         ContainerEnvEntry21: !Sub S3_BUCKET=${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
         ContainerEnvEntry22: !Sub S3_ENDPOINT=https://s3.${AWS::Region}.amazonaws.com
         ContainerEnvEntry23: !Sub S3_REGION=${AWS::Region}
-        ContainerEnvEntry24: !Sub 'PnPdfNormalizerTransformationQueue=${PnPdfNormalizerTransformationQueue}'
         # Secret configuration
         ContainerSecret1: !Sub 'DB_PASSWORD=${SvcUserSecretArn}:password:AWSCURRENT:'
         MicroServiceSecretPrefix: pn-pdf-normalizer-db-svc-user-credentials

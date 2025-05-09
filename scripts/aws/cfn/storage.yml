@@ -35,6 +35,9 @@ Parameters:
   AlarmSNSTopicArn:
     Type: String
     Description: ARN of the shared SNS topic for alarms
+  AlarmSNSTopicName:
+    Type: String
+    Description: 'Topic alarm'
   RdsClusterIdentifierSuffix:
     Type: String
     Description: Suffix to make RDS cluster unique
@@ -110,10 +113,7 @@ Resources:
         LogGroupName: !Sub pn-pdf-normalizer-integration-PnPdfNormalizerTransformationHandler
         LogGroupRetention: !Ref LogRetention
         LogGroupPrefix: /aws/lambda
-        LogsKinesisSourceStreamArn: !If
-          - HasLogsKinesisStream
-          - !Ref LogsKinesisSourceStreamArn
-          - !Ref AWS::NoValue
+
 
   BeyondocPdfRemediationLogGroup:
     Type: AWS::CloudFormation::Stack
@@ -178,7 +178,7 @@ Resources:
     Properties:
       TemplateURL: !Sub '${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml'
       Parameters:
-        QueueName: 'pn-pdf-normalizer-transformation-queue'
+        QueueName: 'pn-ss-transformation-normalizer-queue'
         SqsManagedSseEnabled: true
         MaxReceiveCount: 10
         HasDLQ: True
