@@ -60,9 +60,7 @@ exports.handleEvent = async function(event) {
                     await s3.send(command);
                     console.log("New Tag Set:", tagSettings.Tagging.TagSet);
                 } else {
-                    console.log("Normalization tag found:", normalizationTag);
-
-                    console.log("The 'Transformation-NORMALIZATION' tag is already present, no action needed.");
+                    console.log("The '"+TAG_KEY+"' tag is already present, no action needed.");
                 }
             })
         );
