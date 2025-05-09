@@ -61,6 +61,12 @@ Parameters:
   RdsSecurityGroupId:
     Type: String
     Description: ID of the Security Group attached to the RDS cluster (from storage stack)
+  BeyondocApiUrl:
+      type: String
+      Description: Url API BEYONDOC
+  NormalizerMargins:
+      type: String
+      Description: Margin Default Pdf
   PnSsStagingBucketPrefix:
     Type: String
     Description: Base prefix for SafeStorage bucket name
@@ -372,6 +378,8 @@ Resources:
         Variables:
           REGION: !Ref AWS::Region
           PN_SS_STAGING_BUCKET: !Sub ${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
+          BEYONDOC_API_URL: !Sub ${BeyondocApiUrl}
+          NORMALIZER_MARGINS : !Sub ${NormalizerMargins}
       Tags:
         - Key: Name
           Value: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationHandlerLambdaName}
