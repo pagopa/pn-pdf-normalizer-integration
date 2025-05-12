@@ -470,6 +470,17 @@ Resources:
         - Key: Environment
           Value: !Ref EnvType
 
+  PnPdfNormalizerTransformationHandlerTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10 # 10 is default
+      Enabled: True
+      EventSourceArn: !Ref PnPdfNormalizerTransformationQueueArn
+      FunctionName: !Ref PnPdfNormalizerTransformationHandlerLambda
+      FunctionResponseTypes:
+        - ReportBatchItemFailures
+      MaximumBatchingWindowInSeconds: 0 #default value
+
   LambdaTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
