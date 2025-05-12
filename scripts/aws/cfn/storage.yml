@@ -196,6 +196,27 @@ Resources:
         QueueHasAlarm: 'false'
         AlarmSNSTopicName: !Ref AlarmSNSTopicName
 
+  # Policy to add permissions on normalizer transformation queue to pn-ss microservice.
+  PnPdfNormalizerTransformationQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !GetAtt PnPdfNormalizerTransformationQueueStack.Outputs.QueueURL
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - 'sqs:SendMessage'
+              - 'sqs:ReceiveMessage'
+              - 'sqs:DeleteMessage'
+              - 'sqs:GetQueueAttributes'
+              - 'sqs:GetQueueUrl'
+            Effect: "Allow"
+            Resource: !GetAtt PnPdfNormalizerTransformationQueueStack.Outputs.QueueARN
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:role/pn-safe-storage-TaskRole"
+
 Outputs:
   NormalizedPDFHookLogGroupName:
     Description: Log Group name for the NormalizedPDFHook Lambda
