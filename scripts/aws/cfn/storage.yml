@@ -242,6 +242,9 @@ Outputs:
   RdsClusterIdentifierSuffix:
     Description: Suffix used for RDS cluster identifier
     Value: !Ref RdsClusterIdentifierSuffix
-  PnPdfNormalizerTransformationQueue:
+  PnPdfNormalizerTransformationQueueName:
     Description: 'Nome coda per trasformation'
     Value: !GetAtt PnPdfNormalizerTransformationQueueStack.Outputs.QueueName
+  PnPdfNormalizerTransformationQueueArn:
+    Description: 'ARN coda per trasformation'
+    Value: !GetAtt PnPdfNormalizerTransformationQueueStack.Outputs.QueueARN
