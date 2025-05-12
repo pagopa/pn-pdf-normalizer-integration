@@ -381,8 +381,10 @@ Resources:
             Effect: 'Allow'
             Action:
               - 'sqs:ReceiveMessage'
+              - 'sqs:DeleteMessage'
               - 'sqs:Get*'
               - 'sqs:List*'
+              - 'sqs:SendMessage'
             Resource:
               - !Ref PnPdfNormalizerTransformationQueueArn
           - Sid: 'DefaultKMSGrantRead'
