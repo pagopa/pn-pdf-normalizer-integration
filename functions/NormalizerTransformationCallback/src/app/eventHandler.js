@@ -8,7 +8,6 @@ const AmazonS3URI = require('amazon-s3-uri')
 
 const s3 = new S3Client({});
 
-
 exports.handleEvent = async function(event) {
     try {
         console.log("Received event:", JSON.stringify(event));
