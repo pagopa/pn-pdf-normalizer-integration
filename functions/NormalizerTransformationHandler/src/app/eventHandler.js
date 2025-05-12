@@ -54,6 +54,7 @@ const callBeyonDocApi = async (beyonDocApiUrl, inputPath, margins) => {
     const options = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      port: "8080"
     };
 
     const req = http.request(
