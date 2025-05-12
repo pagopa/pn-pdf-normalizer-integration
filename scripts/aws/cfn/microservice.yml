@@ -433,7 +433,7 @@ Resources:
       Role: !GetAtt PnPdfNormalizerTransformationCallbackLambdaRole.Arn
       Code:
         S3Bucket: !Ref LambdasBucketName
-        S3Key: !Sub ${BucketBasePath}/PnPdfNormalizerTransformationCallback.zip
+        S3Key: !Sub ${BucketBasePath}/NormalizerTransformationCallback.zip
       MemorySize: !Ref PnPdfNormalizerTransformationCallbackMemorySize
       Timeout: !Ref PnPdfNormalizerTransformationCallbackTimeout
       ReservedConcurrentExecutions: !Ref PnPdfNormalizerTransformationCallbackReservedConcurrency
