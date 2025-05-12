@@ -363,6 +363,10 @@ Resources:
             Effect: Allow
             Action:
               - kms:Decrypt
+            Resource: '*'
+            Condition:
+                StringEquals:
+                  aws:ResourceTag/KeyType: !Ref PnSsKmsKeyTagValue
 
   PnPdfNormalizerTransformationHandlerLambdaPolicy:
     Type: AWS::IAM::Policy
