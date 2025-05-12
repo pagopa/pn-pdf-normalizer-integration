@@ -80,9 +80,12 @@ Parameters:
     Type: String
     Description: 'Nome della Lambda function che gestisce i messaggi in entrata dalla coda pn-pdf-normalizer-transformation-queue'
     Default: 'NormalizerTransformationHandler'
-  PnPdfNormalizerTransformationQueue:
+  PnPdfNormalizerTransformationQueueName:
     Type: String
     Description: 'Queue name for the normalization queue'
+  PnPdfNormalizerTransformationQueueArn:
+    Type: String
+    Description: 'Queue ARN for the normalization queue'
   NormalizedPDFHookLambdaName:
     Type: String
     Default: NormalizedPDFHook
@@ -379,7 +382,7 @@ Resources:
               - 'sqs:Get*'
               - 'sqs:List*'
             Resource:
-              - !Ref PnPdfNormalizerTransformationQueue
+              - !Ref PnPdfNormalizerTransformationQueueArn
           - Sid: 'DefaultKMSGrantRead'
             Effect: 'Allow'
             Action:
