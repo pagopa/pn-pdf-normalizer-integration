@@ -110,7 +110,7 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/log-group.yaml
       Parameters:
-        LogGroupName: !Sub pn-pdf-normalizer-integration-PnPdfNormalizerTransformationHandler
+        LogGroupName: !Sub pn-pdf-normalizer-integration-NormalizerTransformationHandler
         LogGroupRetention: !Ref LogRetention
         LogGroupPrefix: /aws/lambda
 
@@ -121,7 +121,7 @@ Resources:
     Properties:
       TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/log-group.yaml
       Parameters:
-        LogGroupName: !Sub pn-pdf-normalizer-integration-PnPdfNormalizerTransformationCallbackLogGroupName
+        LogGroupName: !Sub pn-pdf-normalizer-integration-NormalizerTransformationCallback
         LogGroupRetention: !Ref LogRetention
         LogGroupPrefix: /aws/lambda
 

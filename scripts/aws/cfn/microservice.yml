@@ -444,6 +444,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationCallbackLambdaName}
+        - Key: Environment
+          Value: !Ref EnvType
 
   PnPdfNormalizerTransformationHandlerLambda:
     Type: AWS::Lambda::Function
