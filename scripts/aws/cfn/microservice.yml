@@ -300,7 +300,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole'
 
   NormalizedPDFHookLambdaPolicy:
     Type: AWS::IAM::Policy
@@ -456,6 +456,13 @@ Resources:
       Runtime: nodejs20.x
       Handler: index.handler
       Role: !GetAtt PnPdfNormalizerTransformationHandlerLambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Select [ 0, !Split [ ",", !Ref PdfRasterVpcSubnets ] ]
+          - !Select [ 1, !Split [ ",", !Ref PdfRasterVpcSubnets ] ]
+          - !Select [ 2, !Split [ ",", !Ref PdfRasterVpcSubnets ] ]
+        SecurityGroupIds:
+          - !GetAtt EcsPdfNormalizerDefaultSecurityGroup.GroupId
       Code:
         S3Bucket: !Ref LambdasBucketName
         S3Key: !Sub ${BucketBasePath}/NormalizerTransformationHandler.zip
@@ -464,7 +471,8 @@ Resources:
       ReservedConcurrentExecutions: !Ref NormalizerTransformationHandlerReservedConcurrency
       Environment:
         Variables:
-          BEYONDOC_API_URL: !Sub ${PdfRasterAlbProtocol}://${ServiceEndpointToPdfRaster}:8080${BeyondocApiUrl}
+          BEYONDOC_API_URL: !Sub ${PdfRasterAlbProtocol}://${PdfRasterApplicationLoadBalancerAwsDns}${BeyondocApiUrl}
+          BEYONDOC_API_PROTOCOL: !Sub ${PdfRasterAlbProtocol}
           NORMALIZER_MARGINS : !Sub ${NormalizerMargins}
       Tags:
         - Key: Name

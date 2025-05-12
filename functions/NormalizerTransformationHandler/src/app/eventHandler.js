@@ -1,6 +1,6 @@
 "use strict";
 
-const http = require(process.env.PnSsGestoreRepositoryProtocol);
+const http = require(process.env.BEYONDOC_API_PROTOCOL);
 
 
 exports.handleEvent = async (event) => {
@@ -24,14 +24,15 @@ exports.handleEvent = async (event) => {
 const processSqsRecord = async (record, beyonDocApiUrl, margins, batchItemFailures) => {
   try {
     const body = JSON.parse(record.body);
-    const inputPath = body.inputPath;
+    const fileKey = body.fileKey;
+    const bucketName = body.bucketName;
 
-    if (!inputPath) {
-      console.error("Error: 'inputPath' not found:", body);
+    if (!fileKey || !bucketName) {
+      console.error("Error: 'fileKey' or 'bucketName' not found:", body);
       batchItemFailures.push({ itemIdentifier: record.messageId });
       return;
     }
-
+    const inputPath = "s3://" + bucketName + "/" + fileKey;
     await callBeyonDocApi(beyonDocApiUrl, inputPath, margins);
 
   } catch (error) {

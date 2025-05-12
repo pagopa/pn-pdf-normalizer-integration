@@ -12,6 +12,7 @@ describe("Lambda BeyonDoc - handleEvent", () => {
     process.env.PnSsGestoreRepositoryProtocol = "http";
     process.env.BEYONDOC_API_URL = "http://beyondoc/api/v1/notify-input-pdf-uploaded";
     process.env.NORMALIZER_MARGINS = "2";
+    process.env.BEYONDOC_API_PROTOCOL= "http";
 
     // Mock del modulo "http"
     fakeHttp = {
@@ -45,7 +46,8 @@ describe("Lambda BeyonDoc - handleEvent", () => {
     const fakeEvent = {
       Records: [{
         body: JSON.stringify({
-          inputPath: "s3://tmp/input.pdf"
+          fileKey: "input.pdf",
+          bucketName: "tmp"
         }),
         messageId: "msg-1"
       }]
@@ -94,7 +96,8 @@ describe("Lambda BeyonDoc - handleEvent", () => {
     const fakeEvent = {
       Records: [{
         body: JSON.stringify({
-          inputPath: "s3://tmp/input3.pdf"
+          fileKey: "input3.pdf",
+          bucketName: "tmp"
         }),
         messageId: "msg-2"
       }]
@@ -135,7 +138,8 @@ describe("Lambda BeyonDoc - handleEvent", () => {
      const fakeEvent = {
        Records: [{
          body: JSON.stringify({
-           inputPath: "s3://tmp/input4.pdf"
+          fileKey: "input4.pdf",
+          bucketName: "tmp"
          }),
          messageId: "msg-4"
        }]
@@ -172,7 +176,7 @@ describe("Lambda BeyonDoc - handleEvent", () => {
 
   afterEach(() => {
     delete process.env.BEYONDOC_API_URL;
-    delete process.env.PnSsGestoreRepositoryProtocol;
+    delete process.env.BEYONDOC_API_PROTOCOL;
     delete process.env.NORMALIZER_MARGINS;
   });
 });
