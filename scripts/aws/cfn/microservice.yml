@@ -23,10 +23,8 @@ Parameters:
     Type: String
   BeyondocPdfRemediationImageUri:
     Type: String
-    Default: public.ecr.aws/docker/library/tomcat:9.0.104-jdk21-corretto
   BeyondocWorkerImageUri:
     Type: String
-    Default: public.ecr.aws/docker/library/tomcat:9.0.104-jdk21-corretto
   TemplateBucketBaseUrl:
     Type: String
   AlarmSNSTopicArn:
@@ -133,7 +131,7 @@ Parameters:
     Default: 2GB
   RemediationAlbPath:
     Type: String
-    Default: /notify-input-pdf-uploaded
+    Default: /beyondoc/api/v1/notify-input-pdf-uploaded*
   RemediationAlbPriority:
     Type: Number
     Default: 110
@@ -655,7 +653,7 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         # Database configuration
         ContainerEnvEntry1: !Sub DB_URL=jdbc:postgresql://${RdsEndpointAddress}:${RdsPort}/${RdsDbName}
-        ContainerEnvEntry2: !Sub DB_USER=${SvcUsername}
+        ContainerEnvEntry2: !Sub DB_USERNAME=${SvcUsername}
         ContainerEnvEntry3: DB_DRIVER_CLASS=org.postgresql.Driver
         # HikariCP configuration
         ContainerEnvEntry4: HIKARI_MAX_POOL_SIZE=5
@@ -689,8 +687,9 @@ Resources:
   BeyondocWorkerEcsResources:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/ecs-service.yaml
+      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/ecs-service-v2.yaml
       Parameters:
+        DisableAlbIntegration: true
         MicroServiceUniqueName: pn-pdf-normalizer-worker
         ECSClusterName: !Ref PdfRasterECSClusterName
         ContainerImageURI: !Ref BeyondocWorkerImageUri
@@ -701,9 +700,7 @@ Resources:
         VpcId: !Ref PdfRasterVpcId
         Subnets: !Ref PdfRasterVpcSubnets
         EcsDefaultSecurityGroup: !Ref EcsPdfNormalizerDefaultSecurityGroup
-        LoadBalancerListenerArn: !Ref PdfRasterApplicationLoadBalancerListenerArn
         MappedPaths: /doc-worker-service/* #placeholder tbd
-        LoadbalancerRulePriority: !Ref WorkerAlbPriority
         AlbSecurityGroup: ''
         AutoscalingStrategy: !Ref WorkerScalingStrategy
         MinTasksNumber: !Ref BeyondocWorkerMinTasks
@@ -714,7 +711,7 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         # Database configuration
         ContainerEnvEntry1: !Sub DB_URL=jdbc:postgresql://${RdsEndpointAddress}:${RdsPort}/${RdsDbName}
-        ContainerEnvEntry2: !Sub DB_USER=${SvcUsername}
+        ContainerEnvEntry2: !Sub DB_USERNAME=${SvcUsername}
         ContainerEnvEntry3: DB_DRIVER_CLASS=org.postgresql.Driver
         # HikariCP configuration
         ContainerEnvEntry4: HIKARI_MAX_POOL_SIZE=5
@@ -837,7 +834,6 @@ Resources:
       OKActions:
         - !Ref AlarmSNSTopicArn
       TreatMissingData: breaching
-
   BeyondocWorkerMemoryNotifyAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
