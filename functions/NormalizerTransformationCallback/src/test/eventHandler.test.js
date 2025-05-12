@@ -15,14 +15,6 @@ const {
 // Variabile per catturare il comando inviato
 let capturedTagging = null;
 
-// Mock parseS3Uri
-let fakeParseS3Uri = {
-  parse: (uri) => ({
-    bucket: "openshift-pam-bucket",
-    key: "PAC/test.pdf"
-  })
-};
-
 
 // Finto client S3
 class FakeS3Client {
@@ -115,8 +107,7 @@ describe("NormalizerTransformationCallback", () => {
         GetObjectTaggingCommand,
         PutObjectTaggingCommand,
         DeleteObjectCommand
-      },
-      "@aws-sdk/util-uri-escape": { parseS3Uri: fakeParseS3Uri.parse }
+      }
     });
 
     const fakeEvent = {
@@ -162,8 +153,7 @@ describe("NormalizerTransformationCallback", () => {
         GetObjectTaggingCommand,
         PutObjectTaggingCommand,
         DeleteObjectCommand
-      },
-      "@aws-sdk/util-uri-escape": { parseS3Uri: fakeParseS3Uri.parse }
+      }
     });
 
     const fakeEvent = {
@@ -208,8 +198,7 @@ describe("NormalizerTransformationCallback", () => {
         GetObjectTaggingCommand,
         PutObjectTaggingCommand,
         DeleteObjectCommand
-      },
-      "@aws-sdk/util-uri-escape": { parseS3Uri: fakeParseS3Uri.parse }
+      }
     });
 
     const fakeEvent = {
@@ -248,8 +237,7 @@ describe("NormalizerTransformationCallback", () => {
         GetObjectTaggingCommand,
         PutObjectTaggingCommand,
         DeleteObjectCommand
-      },
-      "@aws-sdk/util-uri-escape": { parseS3Uri: fakeParseS3Uri.parse }
+      }
     });
 
     const fakeEvent = {
@@ -282,8 +270,7 @@ describe("NormalizerTransformationCallback", () => {
         GetObjectTaggingCommand,
         PutObjectTaggingCommand,
         DeleteObjectCommand
-      },
-      "@aws-sdk/util-uri-escape": { parseS3Uri: fakeParseS3Uri.parse }
+      }
     });
 
     const fakeEvent = {

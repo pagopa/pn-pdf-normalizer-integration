@@ -4,7 +4,7 @@ const {
     GetObjectTaggingCommand,
     PutObjectTaggingCommand
 } = require("@aws-sdk/client-s3");
-const { parseS3Uri } = require("@aws-sdk/util-uri-escape");
+const AmazonS3URI = require('amazon-s3-uri')
 
 const s3 = new S3Client({});
 
@@ -19,17 +19,8 @@ exports.handleEvent = async function(event) {
 
                 const checkResult = bodyData.checkResult;
                 const outputPath = bodyData.outputPath;
-
-                const parsedUri = parseS3Uri(outputPath);
-                
-                if (!parsedUri || parsedUri === "") {
-                    throw new Error(`Invalid S3 URI: ${outputPath}`);
-                }
-
+                const { REGION, BUCKET_NAME, FILE_KEY } = AmazonS3URI(outputPath);
                 console.log("Normalization CheckResult:", checkResult);
-
-                const BUCKET_NAME = parsedUri.bucket;
-                const FILE_KEY = parsedUri.key;
 
                 const TAG_KEY = "Transformation-NORMALIZATION";
 
