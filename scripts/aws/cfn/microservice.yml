@@ -475,7 +475,7 @@ Resources:
         # Messaging configuration
         ContainerEnvEntry18: PAC_MESSAGING_ENABLED=false
         # Callback configuration
-        ContainerEnvEntry19: !Sub PAC_NOTIFY_URL=${PdfRasterAlbProtocol}://${PdfRasterApplicationLoadBalancerAwsDns}${LambdaAlbPath}
+        ContainerEnvEntry19: !Sub PAC_NOTIFY_URL=${PdfRasterAlbProtocol}://${PdfRasterApplicationLoadBalancerAwsDns}:${LambdaListenerPort}${LambdaAlbPath}
         # S3 configuration
         ContainerEnvEntry20: !Sub S3_BUCKET=${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
         ContainerEnvEntry21: !Sub S3_URL=https://s3.${AWS::Region}.amazonaws.com
