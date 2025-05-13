@@ -135,6 +135,9 @@ Parameters:
   RemediationAlbPath:
     Type: String
     Default: /beyondoc/api/v1/notify-input-pdf-uploaded*
+  RemediationHealthCheckPath:
+    Type: String
+    Default: '/actuator/health'
   RemediationAlbPriority:
     Type: Number
     Default: 110
@@ -671,6 +674,7 @@ Resources:
         EcsDefaultSecurityGroup: !Ref EcsPdfNormalizerDefaultSecurityGroup
         LoadBalancerListenerArn: !Ref PdfRasterApplicationLoadBalancerListenerArn
         MappedPaths: !Sub ${RemediationAlbPath}
+        HealthCheckPath: !Ref RemediationHealthCheckPath
         LoadbalancerRulePriority: !Ref RemediationAlbPriority
         AlbSecurityGroup: !Ref PdfRasterWebappSecurityGroupId
         AutoscalingStrategy: !Ref RemediationScalingStrategy
@@ -708,7 +712,7 @@ Resources:
         ContainerEnvEntry19: !Sub PAC_NOTIFY_URL=${PdfRasterAlbProtocol}://${PdfRasterApplicationLoadBalancerAwsDns}${PnPdfNormalizerTransformationCallbackLambdaAlbPath}
         # S3 configuration
         ContainerEnvEntry20: !Sub S3_BUCKET=${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
-        ContainerEnvEntry21: !Sub S3_ENDPOINT=https://s3.${AWS::Region}.amazonaws.com
+        ContainerEnvEntry21: !Sub S3_URL=https://s3.${AWS::Region}.amazonaws.com
         ContainerEnvEntry22: !Sub S3_REGION=${AWS::Region}
         # Secret configuration
         ContainerSecret1: !Sub 'DB_PASSWORD=${SvcUserSecretArn}:password:AWSCURRENT:'
@@ -767,7 +771,7 @@ Resources:
         ContainerEnvEntry20: PAC_MESSAGING_ENABLED=false
         # S3 configuration
         ContainerEnvEntry21: !Sub S3_BUCKET=${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
-        ContainerEnvEntry22: !Sub S3_ENDPOINT=https://s3.${AWS::Region}.amazonaws.com
+        ContainerEnvEntry22: !Sub S3_URL=https://s3.${AWS::Region}.amazonaws.com
         ContainerEnvEntry23: !Sub S3_REGION=${AWS::Region}
         # Secret configuration
         ContainerSecret1: !Sub 'DB_PASSWORD=${SvcUserSecretArn}:password:AWSCURRENT:'
