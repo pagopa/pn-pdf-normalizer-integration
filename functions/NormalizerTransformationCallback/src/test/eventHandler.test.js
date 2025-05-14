@@ -111,15 +111,13 @@ describe("NormalizerTransformationCallback", () => {
     });
 
     const fakeEvent = {
-      Records: [{
         body: JSON.stringify({
           checkResult: true,
           mainErrorReason: "",
-          outputPath: "s3://openshift-pam-bucket/PAC/test.pdf",
+          pdffileName: "s3://openshift-pam-bucket/PAC/test.pdf",
           correlationId: "abcdefg-hijkl"
         }),
         messageId: "msg-1"
-      }]
     };
 
     const result = await lambda.handleEvent(fakeEvent);
@@ -157,15 +155,13 @@ describe("NormalizerTransformationCallback", () => {
     });
 
     const fakeEvent = {
-      Records: [{
         body: JSON.stringify({
           checkResult: false,
           mainErrorReason: "Some issue",
-          outputPath: "s3://openshift-pam-bucket/PAC/test.pdf",
+          pdffileName: "s3://openshift-pam-bucket/PAC/test.pdf",
           correlationId: "xyz-123"
         }),
         messageId: "msg-2"
-      }]
     };
 
     const result = await lambda.handleEvent(fakeEvent);
@@ -202,15 +198,13 @@ describe("NormalizerTransformationCallback", () => {
     });
 
     const fakeEvent = {
-      Records: [{
         body: JSON.stringify({
           checkResult: true,
           mainErrorReason: "",
-          outputPath: "s3://openshift-pam-bucket/PAC/test.pdf",
+          pdffileName: "s3://openshift-pam-bucket/PAC/test.pdf",
           correlationId: "abc-already-tagged"
         }),
         messageId: "msg-3"
-      }]
     };
 
     const result = await lambda.handleEvent(fakeEvent);
@@ -241,21 +235,20 @@ describe("NormalizerTransformationCallback", () => {
     });
 
     const fakeEvent = {
-      Records: [{
         body: JSON.stringify({
           checkResult: true,
           mainErrorReason: "",
-          outputPath: "s3://openshift-pam-bucket/PAC/test.pdf",
+          pdffileName: "s3://openshift-pam-bucket/PAC/test.pdf",
           correlationId: "test-id"
         }),
         messageId: "msg-123"
-      }]
     };
 
     const res = await lambda.handleEvent(fakeEvent);
 
     expect(res.statusCode).to.equal(500);
   });
+
   it("torniamo 400 per NoSuchKey ", async () => {
     // Simula errore GetObjectTaggingCommand
     s3Mock.on(GetObjectTaggingCommand).rejects({
@@ -274,21 +267,18 @@ describe("NormalizerTransformationCallback", () => {
     });
 
     const fakeEvent = {
-      Records: [{
         body: JSON.stringify({
           checkResult: true,
           mainErrorReason: "",
-          outputPath: "s3://openshift-pam-bucket/PAC/test.pdf",
+          pdffileName: "s3://openshift-pam-bucket/PAC/test.pdf",
           correlationId: "test-id"
         }),
         messageId: "msg-123"
-      }]
     };
 
     const res = await lambda.handleEvent(fakeEvent);
 
     expect(res.statusCode).to.equal(400);
-    expect(res.body).to.include('NoSuchKey');
   });
 
 

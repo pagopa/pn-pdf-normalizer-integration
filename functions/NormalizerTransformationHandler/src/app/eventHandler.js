@@ -73,7 +73,7 @@ const callBeyonDocApi = async (beyonDocApiUrl, inputPath, margins) => {
           switch (res.statusCode) {
             case 200:
               try {
-              resolve(JSON.parse(responseBody));
+              resolve(responseBody);
               } catch (error) {
                 console.error("Errore parsing JSON:", error.message);
                 reject(new Error(`Errore parsing JSON: ${error.message}`));
