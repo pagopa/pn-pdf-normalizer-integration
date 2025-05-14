@@ -1,6 +1,9 @@
 const { expect } = require("chai");
 const proxyquire = require("proxyquire").noPreserveCache();
+const { S3Client, ListObjectVersionsCommand } = require("@aws-sdk/client-s3");
+const { mockClient } = require("aws-sdk-client-mock");
 
+s3MockClient = mockClient(S3Client);
 
 describe("Lambda BeyonDoc - handleEvent", () => {
   let capturedOptions;
@@ -43,6 +46,8 @@ describe("Lambda BeyonDoc - handleEvent", () => {
       http: fakeHttp,
     });
 
+    s3MockClient.on(ListObjectVersionsCommand).resolves({ Versions: [{}] });
+
     const fakeEvent = {
       Records: [{
         body: JSON.stringify({
@@ -69,6 +74,8 @@ describe("Lambda BeyonDoc - handleEvent", () => {
 
 //test-KO
   it("deve gestire un errore 500 nell'API BeyondDoc", async () => {
+
+    s3MockClient.on(ListObjectVersionsCommand).resolves({ Versions: [{}] });
 
     // Override per simulare errore HTTP 500
     fakeHttp.request = (url, options, callback) => {
@@ -112,6 +119,8 @@ describe("Lambda BeyonDoc - handleEvent", () => {
 
   it("deve gestire un errore 404 nell'API BeyondDoc", async () => {
 
+     s3MockClient.on(ListObjectVersionsCommand).resolves({ Versions: [{}] });
+
      // Override per simulare errore HTTP 500
      fakeHttp.request = (url, options, callback) => {
        const res = {
@@ -153,6 +162,9 @@ describe("Lambda BeyonDoc - handleEvent", () => {
    });
 
   it("deve gestire un record con inputPath mancante", async () => {
+
+    s3MockClient.on(ListObjectVersionsCommand).resolves({ Versions: [{}] });
+
     const lambda = proxyquire("../app/eventHandler.js", {
       http: fakeHttp,
     });
@@ -178,5 +190,6 @@ describe("Lambda BeyonDoc - handleEvent", () => {
     delete process.env.BEYONDOC_API_URL;
     delete process.env.BEYONDOC_API_PROTOCOL;
     delete process.env.NORMALIZER_MARGINS;
+    s3MockClient.reset();
   });
 });

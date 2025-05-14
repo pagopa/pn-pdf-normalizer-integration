@@ -1,6 +1,8 @@
 "use strict";
 
 const http = require(process.env.BEYONDOC_API_PROTOCOL);
+const { S3Client, ListObjectVersionsCommand } = require("@aws-sdk/client-s3");
+const s3 = new S3Client({});
 
 
 exports.handleEvent = async (event) => {
@@ -32,6 +34,12 @@ const processSqsRecord = async (record, beyonDocApiUrl, margins, batchItemFailur
       batchItemFailures.push({ itemIdentifier: record.messageId });
       return;
     }
+
+    if (await hasMultipleVersions(bucketName, fileKey)) {
+      console.log("File " + fileKey + " has multiple versions. Skipping operation.");
+      return;
+    }
+
     const inputPath = "s3://" + bucketName + "/" + fileKey;
     await callBeyonDocApi(beyonDocApiUrl, inputPath, margins);
 
@@ -98,4 +106,15 @@ const callBeyonDocApi = async (beyonDocApiUrl, inputPath, margins) => {
     req.end();
   });
 };
+
+async function hasMultipleVersions(bucketName, key) {
+  const command = new ListObjectVersionsCommand({
+    Bucket: bucketName,
+    Prefix: key,
+  });
+
+  const response = await s3.send(command);
+  const versions = response.Versions?.filter(version => version.Key === key) || [];
+  return versions.length > 1;
+}
 

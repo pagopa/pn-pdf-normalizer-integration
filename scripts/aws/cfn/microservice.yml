@@ -359,6 +359,8 @@ Resources:
             Action:
               - s3:GetObject*
               - s3:PutObjectTagging
+              - s3:List*
+              - s3:GetBucket*
             Resource:
               - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
               - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}/*
@@ -390,6 +392,15 @@ Resources:
               - 'sqs:SendMessage'
             Resource:
               - !Ref PnPdfNormalizerTransformationQueueArn
+          - Sid: AllowS3AccessSafeStorage
+            Effect: Allow
+            Action:
+              - 's3:GetObject*'
+              - 's3:List*'
+              - 's3:GetBucket*'
+            Resource:
+              - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
+              - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}/*
           - Sid: 'DefaultKMSGrantRead'
             Effect: 'Allow'
             Action:
