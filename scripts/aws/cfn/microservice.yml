@@ -448,7 +448,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationCallbackLambdaName}
-      Runtime: nodejs20.x
+      Runtime: nodejs22.x
       Handler: index.handler
       Role: !GetAtt PnPdfNormalizerTransformationCallbackLambdaRole.Arn
       Code:
@@ -467,7 +467,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationHandlerLambdaName}
-      Runtime: nodejs20.x
+      Runtime: nodejs22.x
       Handler: index.handler
       Role: !GetAtt PnPdfNormalizerTransformationHandlerLambdaRole.Arn
       VpcConfig:

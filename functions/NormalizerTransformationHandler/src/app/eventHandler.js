@@ -36,7 +36,7 @@ const processSqsRecord = async (record, beyonDocApiUrl, margins, batchItemFailur
     }
 
     if (await hasMultipleVersions(bucketName, fileKey)) {
-      console.log("File " + fileKey + " has multiple versions. Skipping operation.");
+      console.warn("File " + fileKey + " has multiple versions. Skipping operation.");
       return;
     }
 
