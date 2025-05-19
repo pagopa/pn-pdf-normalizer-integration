@@ -41,6 +41,8 @@ Parameters:
     Type: String
   PdfRasterDefaultSecurityGroup:
     Type: String
+  ServiceEndpointToPdfRaster:
+    Type: String
   RdsEndpointAddress:
     Type: String
     Description: RDS Cluster Endpoint Address (from storage stack)
@@ -59,6 +61,12 @@ Parameters:
   RdsSecurityGroupId:
     Type: String
     Description: ID of the Security Group attached to the RDS cluster (from storage stack)
+  BeyondocApiUrl:
+      Type: String
+      Description: Url API BEYONDOC
+  NormalizerMargins:
+      Type: String
+      Description: Margin Default Pdf
   PnSsStagingBucketPrefix:
     Type: String
     Description: Base prefix for SafeStorage bucket name
@@ -66,16 +74,35 @@ Parameters:
   PnSsKmsKeyTagValue:
     Type: String
     Default: PnSsKmsBucket
+  PnPdfNormalizerTransformationHandlerLambdaName:
+    Type: String
+    Description: 'Nome della Lambda function che gestisce i messaggi in entrata dalla coda pn-pdf-normalizer-transformation-queue'
+    Default: 'NormalizerTransformationHandler'
+  PnPdfNormalizerTransformationQueueName:
+    Type: String
+    Description: 'Queue name for the normalization queue'
+  PnPdfNormalizerTransformationQueueArn:
+    Type: String
+    Description: 'Queue ARN for the normalization queue'
   NormalizedPDFHookLambdaName:
     Type: String
     Default: NormalizedPDFHook
   NormalizedPDFHookReservedConcurrency:
     Type: Number
     Default: 5
+  NormalizerTransformationHandlerReservedConcurrency:
+    Type: Number
+    Default: 5
   NormalizedPDFHookMemorySize:
     Type: Number
     Default: 512
+  NormalizerTransformationHandlerMemorySize:
+    Type: Number
+    Default: 512
   NormalizedPDFHookTimeout:
+    Type: Number
+    Default: 60
+  NormalizerTransformationHandlerTimeout:
     Type: Number
     Default: 60
   LambdaAlbPath:
@@ -101,10 +128,10 @@ Parameters:
     Description: Suffix to make RDS cluster unique
   BeyondocPdfRemediationCpu:
     Type: Number
-    Default: 1024 
+    Default: 1024
   BeyondocPdfRemediationMemory:
     Type: String
-    Default: 2GB 
+    Default: 2GB
   RemediationAlbPath:
     Type: String
     Default: /beyondoc/api/v1/notify-input-pdf-uploaded*
@@ -113,35 +140,35 @@ Parameters:
     Default: '/actuator/health'
   RemediationAlbPriority:
     Type: Number
-    Default: 110 
+    Default: 110
   WorkerAlbPriority:
     Type: Number
     Default: 115
     Description: ALB listener rule priority for Worker service (if exposed)
   BeyondocWorkerCpu:
     Type: Number
-    Default: 1024 
+    Default: 1024
   BeyondocWorkerMemory:
     Type: String
-    Default: 2GB 
+    Default: 2GB
   BeyondocPdfRemediationMinTasks:
     Type: Number
-    Default: 1 
+    Default: 1
   BeyondocPdfRemediationMaxTasks:
     Type: Number
-    Default: 2 
+    Default: 2
   BeyondocWorkerMinTasks:
     Type: Number
-    Default: 1 
+    Default: 1
   BeyondocWorkerMaxTasks:
     Type: Number
-    Default: 2 
+    Default: 2
   EcsScalingEvaluationPeriods:
     Type: Number
-    Default: 5 
+    Default: 5
   RemediationScalingStrategy:
     Type: String
-    Default: REST-API 
+    Default: REST-API
     AllowedValues:
       - CUSTOM
       - Disabled
@@ -152,7 +179,7 @@ Parameters:
     Default: 100 #placeholder tbd
   WorkerScalingStrategy:
     Type: String
-    Default: CUSTOM 
+    Default: CUSTOM
     AllowedValues:
       - CUSTOM
       - Disabled
@@ -160,31 +187,31 @@ Parameters:
       - SQS
   WorkerCpuScalingThreshold:
     Type: Number
-    Default: 70 
+    Default: 70
   WorkerMemoryScalingThreshold:
     Type: Number
-    Default: 75 
+    Default: 75
   BeyondocPdfRemediationDisableOtel:
     Type: String
-    Default: 'true' 
+    Default: 'true'
     AllowedValues:
       - 'true'
       - 'false'
   BeyondocWorkerDisableOtel:
     Type: String
-    Default: 'true' 
+    Default: 'true'
     AllowedValues:
       - 'true'
       - 'false'
   BeyondocPdfRemediationMountEfs:
     Type: String
-    Default: 'false' 
+    Default: 'false'
     AllowedValues:
       - 'true'
       - 'false'
   BeyondocWorkerMountEfs:
     Type: String
-    Default: 'false' 
+    Default: 'false'
     AllowedValues:
       - 'true'
       - 'false'
@@ -202,7 +229,7 @@ Parameters:
     Default: 1
   EcsMemoryAlarmThreshold:
     Type: Number
-    Default: 80 
+    Default: 80
   EcsMemoryAlarmEvaluationPeriods:
     Type: Number
     Default: 5
@@ -215,6 +242,26 @@ Parameters:
   BeyondocWorkerLogGroupName:
     Type: String
     Description: Log Group name for doc-worker-service (from storage stack)
+
+  PnPdfNormalizerTransformationCallbackLambdaName:
+    Type: String
+    Default: NormalizerTransformationCallback
+  PnPdfNormalizerTransformationCallbackReservedConcurrency:
+    Type: Number
+    Default: 5
+  PnPdfNormalizerTransformationCallbackMemorySize:
+    Type: Number
+    Default: 512
+  PnPdfNormalizerTransformationCallbackTimeout:
+    Type: Number
+    Default: 60
+  PnPdfNormalizerTransformationCallbackLambdaAlbPath:
+    Type: String
+    Description: Path for the PnPdfNormalizerTransformationCallback Lambda
+  PnPdfNormalizerTransformationCallbackLambdaAlbPriority:
+    Type: Number
+    Default: 105
+
 
 Conditions:
   IsRemediationScalingEnabled: !Not
@@ -244,6 +291,20 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
+  PnPdfNormalizerTransformationHandlerLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub pn-pdf-normalizer-integration-TransformationHandlerRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole'
+
   NormalizedPDFHookLambdaPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -265,6 +326,96 @@ Resources:
             Effect: Allow
             Action:
               - kms:Decrypt
+            Resource: '*'
+            Condition:
+              StringEquals:
+                aws:ResourceTag/KeyType: !Ref PnSsKmsKeyTagValue
+
+  PnPdfNormalizerTransformationCallbackLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub pn-pdf-normalizer-integration-TransformationCallbackRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  PnPdfNormalizerTransformationCallbackLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub pn-pdf-normalizer-integration-PnPdfNormalizerTransformationCallbackLambdaPolicy
+      Roles:
+        - !Ref PnPdfNormalizerTransformationCallbackLambdaRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowS3AccessSafeStorage
+            Effect: Allow
+            Action:
+              - s3:GetObject*
+              - s3:PutObjectTagging
+              - s3:List*
+              - s3:GetBucket*
+            Resource:
+              - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
+              - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}/*
+          - Sid: AllowKMSAccessSafeStorage
+            Effect: Allow
+            Action:
+              - kms:Decrypt
+            Resource: '*'
+            Condition:
+                StringEquals:
+                  aws:ResourceTag/KeyType: !Ref PnSsKmsKeyTagValue
+
+  PnPdfNormalizerTransformationHandlerLambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub pn-pdf-normalizer-integration-PnPdfNormalizerTransformationHandlerLambdaPolicy
+      Roles:
+        - !Ref PnPdfNormalizerTransformationHandlerLambdaRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: 'GetInvokeSQS'
+            Effect: 'Allow'
+            Action:
+              - 'sqs:ReceiveMessage'
+              - 'sqs:DeleteMessage'
+              - 'sqs:Get*'
+              - 'sqs:List*'
+              - 'sqs:SendMessage'
+            Resource:
+              - !Ref PnPdfNormalizerTransformationQueueArn
+          - Sid: AllowS3AccessSafeStorage
+            Effect: Allow
+            Action:
+              - 's3:GetObject*'
+              - 's3:List*'
+              - 's3:GetBucket*'
+            Resource:
+              - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
+              - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}/*
+          - Sid: 'DefaultKMSGrantRead'
+            Effect: 'Allow'
+            Action:
+              - 'kms:GenerateDataKey'
+              - 'kms:Decrypt'
+            Resource: '*'
+            Condition:
+              StringLike:
+                kms:RequestAlias: 'alias/aws/sqs'
+          - Effect: Allow
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:GenerateDataKey'
+
             Resource: '*'
             Condition:
               StringEquals:
@@ -293,6 +444,67 @@ Resources:
         - Key: Environment
           Value: !Ref EnvType
 
+  PnPdfNormalizerTransformationCallbackLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationCallbackLambdaName}
+      Runtime: nodejs22.x
+      Handler: index.handler
+      Role: !GetAtt PnPdfNormalizerTransformationCallbackLambdaRole.Arn
+      Code:
+        S3Bucket: !Ref LambdasBucketName
+        S3Key: !Sub ${BucketBasePath}/NormalizerTransformationCallback.zip
+      MemorySize: !Ref PnPdfNormalizerTransformationCallbackMemorySize
+      Timeout: !Ref PnPdfNormalizerTransformationCallbackTimeout
+      ReservedConcurrentExecutions: !Ref PnPdfNormalizerTransformationCallbackReservedConcurrency
+      Tags:
+        - Key: Name
+          Value: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationCallbackLambdaName}
+        - Key: Environment
+          Value: !Ref EnvType
+
+  PnPdfNormalizerTransformationHandlerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationHandlerLambdaName}
+      Runtime: nodejs22.x
+      Handler: index.handler
+      Role: !GetAtt PnPdfNormalizerTransformationHandlerLambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Select [ 0, !Split [ ",", !Ref PdfRasterVpcSubnets ] ]
+          - !Select [ 1, !Split [ ",", !Ref PdfRasterVpcSubnets ] ]
+          - !Select [ 2, !Split [ ",", !Ref PdfRasterVpcSubnets ] ]
+        SecurityGroupIds:
+          - !GetAtt EcsPdfNormalizerDefaultSecurityGroup.GroupId
+      Code:
+        S3Bucket: !Ref LambdasBucketName
+        S3Key: !Sub ${BucketBasePath}/NormalizerTransformationHandler.zip
+      MemorySize: !Ref NormalizerTransformationHandlerMemorySize
+      Timeout: !Ref NormalizerTransformationHandlerTimeout
+      ReservedConcurrentExecutions: !Ref NormalizerTransformationHandlerReservedConcurrency
+      Environment:
+        Variables:
+          BEYONDOC_API_URL: !Sub ${PdfRasterAlbProtocol}://${PdfRasterApplicationLoadBalancerAwsDns}${BeyondocApiUrl}
+          BEYONDOC_API_PROTOCOL: !Sub ${PdfRasterAlbProtocol}
+          NORMALIZER_MARGINS : !Sub ${NormalizerMargins}
+      Tags:
+        - Key: Name
+          Value: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationHandlerLambdaName}
+        - Key: Environment
+          Value: !Ref EnvType
+
+  PnPdfNormalizerTransformationHandlerTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10 # 10 is default
+      Enabled: True
+      EventSourceArn: !Ref PnPdfNormalizerTransformationQueueArn
+      FunctionName: !Ref PnPdfNormalizerTransformationHandlerLambda
+      FunctionResponseTypes:
+        - ReportBatchItemFailures
+      MaximumBatchingWindowInSeconds: 0 #default value
+
   LambdaTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
@@ -305,6 +517,18 @@ Resources:
         - Key: Environment
           Value: !Ref EnvType
 
+  PnPdfNormalizerTransformationCallbackTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub lambda-callback-tg-${EnvType}
+      TargetType: lambda
+      Targets:
+        - Id: !GetAtt PnPdfNormalizerTransformationCallbackLambda.Arn
+      HealthCheckEnabled: false
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvType
+
   LambdaInvokePermissionAlb:
     Type: AWS::Lambda::Permission
     Properties:
@@ -312,6 +536,13 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: elasticloadbalancing.amazonaws.com
       # SourceArn: placeholder tbd
+
+  PnPdfNormalizerTransformationCallbackLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt PnPdfNormalizerTransformationCallbackLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: elasticloadbalancing.amazonaws.com
 
   AlbListenerRuleLambda:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -326,6 +557,20 @@ Resources:
           PathPatternConfig:
             Values:
               - !Ref LambdaAlbPath
+
+  PnPdfNormalizerTransformationCallbackListenerRuleLambda:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref PdfRasterApplicationLoadBalancerListenerArn
+      Priority: !Ref PnPdfNormalizerTransformationCallbackLambdaAlbPriority
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref PnPdfNormalizerTransformationCallbackTargetGroup
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+              - !Ref PnPdfNormalizerTransformationCallbackLambdaAlbPath
 
   EcsPdfNormalizerDefaultSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -475,7 +720,7 @@ Resources:
         # Messaging configuration
         ContainerEnvEntry18: PAC_MESSAGING_ENABLED=false
         # Callback configuration
-        ContainerEnvEntry19: !Sub PAC_NOTIFY_URL=${PdfRasterAlbProtocol}://${PdfRasterApplicationLoadBalancerAwsDns}${LambdaAlbPath}
+        ContainerEnvEntry19: !Sub PAC_NOTIFY_URL=${PdfRasterAlbProtocol}://${PdfRasterApplicationLoadBalancerAwsDns}:${LambdaListenerPort}${PnPdfNormalizerTransformationCallbackLambdaAlbPath}
         # S3 configuration
         ContainerEnvEntry20: !Sub S3_BUCKET=${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
         ContainerEnvEntry21: !Sub S3_URL=https://s3.${AWS::Region}.amazonaws.com
@@ -549,6 +794,16 @@ Resources:
       TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/lambda-alarms.yaml
       Parameters:
         FunctionName: !Ref NormalizedPDFHookLambda
+        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
+        DataPointsToAlarm: !Ref LambdaDataPointsToAlarm
+        EvaluationPeriods: !Ref LambdaEvaluationPeriods
+
+  NormalizerTransformationHandlerAlarms:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/lambda-alarms.yaml
+      Parameters:
+        FunctionName: !Ref PnPdfNormalizerTransformationHandlerLambda
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         DataPointsToAlarm: !Ref LambdaDataPointsToAlarm
         EvaluationPeriods: !Ref LambdaEvaluationPeriods
@@ -651,6 +906,9 @@ Outputs:
   NormalizedPDFHookLambdaArn:
     Description: ARN of the NormalizedPDFHook Lambda function
     Value: !GetAtt NormalizedPDFHookLambda.Arn
+  NormalizerTransformationHandlerArn:
+    Description: ARN of the NormalizerTransformationHandler Lambda function
+    Value: !GetAtt PnPdfNormalizerTransformationHandlerLambda.Arn
   LambdaTargetGroupArn:
     Description: ARN of the Target Group for the Lambda
     Value: !Ref LambdaTargetGroup

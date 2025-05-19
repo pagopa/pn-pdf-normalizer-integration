@@ -35,6 +35,9 @@ Parameters:
   AlarmSNSTopicArn:
     Type: String
     Description: ARN of the shared SNS topic for alarms
+  AlarmSNSTopicName:
+    Type: String
+    Description: 'Topic alarm'
   RdsClusterIdentifierSuffix:
     Type: String
     Description: Suffix to make RDS cluster unique
@@ -100,6 +103,28 @@ Resources:
           - !Ref LogsKinesisSourceStreamArn
           - !Ref AWS::NoValue
 
+  PnPdfNormalizerTransformationHandlerLambdaLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/log-group.yaml
+      Parameters:
+        LogGroupName: !Sub pn-pdf-normalizer-integration-NormalizerTransformationHandler
+        LogGroupRetention: !Ref LogRetention
+        LogGroupPrefix: /aws/lambda
+
+  PnPdfNormalizerTransformationCallbackLogGroup:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/log-group.yaml
+      Parameters:
+        LogGroupName: !Sub pn-pdf-normalizer-integration-NormalizerTransformationCallback
+        LogGroupRetention: !Ref LogRetention
+        LogGroupPrefix: /aws/lambda
+
   BeyondocPdfRemediationLogGroup:
     Type: AWS::CloudFormation::Stack
     UpdateReplacePolicy: Retain
@@ -156,10 +181,49 @@ Resources:
         DbConnectionsAlarmThreshold: !Ref RdsDbConnectionsAlarmThreshold
         # SourceSecurityGroupIdForDbAccess: not in use, tbd
 
+  PnPdfNormalizerTransformationQueueStack:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      TemplateURL: !Sub '${TemplateBucketBaseUrl}/fragments/sqs-queue.yaml'
+      Parameters:
+        QueueName: 'pn-ss-transformation-normalizer-queue'
+        SqsManagedSseEnabled: true
+        MaxReceiveCount: 10
+        HasDLQ: True
+        VisibilityTimeout: 300
+        QueueHasAlarm: 'false'
+        AlarmSNSTopicName: !Ref AlarmSNSTopicName
+
+  # Policy to add permissions on normalizer transformation queue to pn-ss microservice.
+  PnPdfNormalizerTransformationQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !GetAtt PnPdfNormalizerTransformationQueueStack.Outputs.QueueURL
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - 'sqs:SendMessage'
+              - 'sqs:ReceiveMessage'
+              - 'sqs:DeleteMessage'
+              - 'sqs:GetQueueAttributes'
+              - 'sqs:GetQueueUrl'
+            Effect: "Allow"
+            Resource: !GetAtt PnPdfNormalizerTransformationQueueStack.Outputs.QueueARN
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:role/pn-safe-storage-TaskRole"
+
 Outputs:
   NormalizedPDFHookLogGroupName:
     Description: Log Group name for the NormalizedPDFHook Lambda
     Value: !GetAtt NormalizedPDFHookLambdaLogGroup.Outputs.LogGroupName
+  PnPdfNormalizerTransformationHandlerLogGroupName:
+    Description: Log Group name for the NormalizerTransformationHandler Lambda
+    Value: !GetAtt PnPdfNormalizerTransformationHandlerLambdaLogGroup.Outputs.LogGroupName
   BeyondocPdfRemediationLogGroupName:
     Description: Log Group name for the Beyondoc Pdf Remediation service
     Value: !GetAtt BeyondocPdfRemediationLogGroup.Outputs.LogGroupName
@@ -199,3 +263,9 @@ Outputs:
   RdsClusterIdentifierSuffix:
     Description: Suffix used for RDS cluster identifier
     Value: !Ref RdsClusterIdentifierSuffix
+  PnPdfNormalizerTransformationQueueName:
+    Description: 'Nome coda per trasformation'
+    Value: !GetAtt PnPdfNormalizerTransformationQueueStack.Outputs.QueueName
+  PnPdfNormalizerTransformationQueueArn:
+    Description: 'ARN coda per trasformation'
+    Value: !GetAtt PnPdfNormalizerTransformationQueueStack.Outputs.QueueARN
