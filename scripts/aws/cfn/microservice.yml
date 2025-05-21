@@ -668,7 +668,7 @@ Resources:
               StringEquals:
                 aws:ResourceTag/KeyType: !Ref PnSsKmsKeyTagValue
 
-  BeyondocPdfRemediationEcsResources:
+  BeyondocPdfRemediationMicroservice:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/ecs-service.yaml
@@ -729,7 +729,7 @@ Resources:
         ContainerSecret1: !Sub 'DB_PASSWORD=${SvcUserSecretArn}:password:AWSCURRENT:'
         MicroServiceSecretPrefix: pn-pdf-normalizer-db-svc-user-credentials
 
-  BeyondocWorkerEcsResources:
+  BeyondocWorkerMicroservice:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/ecs-service-v2.yaml
@@ -820,7 +820,7 @@ Resources:
         - Name: ClusterName
           Value: !Ref PdfRasterECSClusterName
         - Name: ServiceName
-          Value: !GetAtt BeyondocWorkerEcsResources.Outputs.ServiceName
+          Value: !GetAtt BeyondocWorkerMicroservice.Outputs.ServiceName
       Statistic: Average
       Period: 60
       EvaluationPeriods: !Ref EcsScalingEvaluationPeriods
@@ -828,9 +828,9 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: breaching
       AlarmActions:
-        - !GetAtt BeyondocWorkerEcsResources.Outputs.ScaleUpPolicy
+        - !GetAtt BeyondocWorkerMicroservice.Outputs.ScaleUpPolicy
       OKActions:
-        - !GetAtt BeyondocWorkerEcsResources.Outputs.ScaleDownPolicy
+        - !GetAtt BeyondocWorkerMicroservice.Outputs.ScaleDownPolicy
 
   BeyondocWorkerMemoryAlarmScaling:
     Type: AWS::CloudWatch::Alarm
@@ -845,7 +845,7 @@ Resources:
         - Name: ClusterName
           Value: !Ref PdfRasterECSClusterName
         - Name: ServiceName
-          Value: !GetAtt BeyondocWorkerEcsResources.Outputs.ServiceName
+          Value: !GetAtt BeyondocWorkerMicroservice.Outputs.ServiceName
       Statistic: Average
       Period: 60
       EvaluationPeriods: !Ref EcsScalingEvaluationPeriods
@@ -853,9 +853,9 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: breaching
       AlarmActions:
-        - !GetAtt BeyondocWorkerEcsResources.Outputs.ScaleUpPolicy
+        - !GetAtt BeyondocWorkerMicroservice.Outputs.ScaleUpPolicy
       OKActions:
-        - !GetAtt BeyondocWorkerEcsResources.Outputs.ScaleDownPolicy
+        - !GetAtt BeyondocWorkerMicroservice.Outputs.ScaleDownPolicy
 
   BeyondocPdfRemediationMemoryNotifyAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -868,7 +868,7 @@ Resources:
         - Name: ClusterName
           Value: !Ref PdfRasterECSClusterName
         - Name: ServiceName
-          Value: !GetAtt BeyondocPdfRemediationEcsResources.Outputs.ServiceName
+          Value: !GetAtt BeyondocPdfRemediationMicroservice.Outputs.ServiceName
       Statistic: Average
       Period: 60
       EvaluationPeriods: !Ref EcsMemoryAlarmEvaluationPeriods
@@ -890,7 +890,7 @@ Resources:
         - Name: ClusterName
           Value: !Ref PdfRasterECSClusterName
         - Name: ServiceName
-          Value: !GetAtt BeyondocWorkerEcsResources.Outputs.ServiceName
+          Value: !GetAtt BeyondocWorkerMicroservice.Outputs.ServiceName
       Statistic: Average
       Period: 60
       EvaluationPeriods: !Ref EcsMemoryAlarmEvaluationPeriods
@@ -914,7 +914,7 @@ Outputs:
     Value: !Ref LambdaTargetGroup
   BeyondocPdfRemediationServiceName:
     Description: Name of the Beyondoc Pdf Remediation ECS Service
-    Value: !GetAtt BeyondocPdfRemediationEcsResources.Outputs.ServiceName
+    Value: !GetAtt BeyondocPdfRemediationMicroservice.Outputs.ServiceName
   BeyondocWorkerServiceName:
     Description: Name of the Beyondoc Worker ECS Service
-    Value: !GetAtt BeyondocWorkerEcsResources.Outputs.ServiceName
+    Value: !GetAtt BeyondocWorkerMicroservice.Outputs.ServiceName
