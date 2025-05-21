@@ -128,7 +128,7 @@ Parameters:
     Description: Suffix to make RDS cluster unique
   BeyondocPdfRemediationCpu:
     Type: Number
-    Default: 1024
+    Default: 2048
   BeyondocPdfRemediationMemory:
     Type: String
     Default: 2GB
@@ -141,13 +141,19 @@ Parameters:
   RemediationAlbPriority:
     Type: Number
     Default: 110
+  WorkerAlbPath:
+    Type: String
+    Default: /metrics*
+  WorkerHealthCheckPath:
+    Type: String
+    Default: '/actuator/health'
   WorkerAlbPriority:
     Type: Number
     Default: 115
     Description: ALB listener rule priority for Worker service (if exposed)
   BeyondocWorkerCpu:
     Type: Number
-    Default: 1024
+    Default: 2048
   BeyondocWorkerMemory:
     Type: String
     Default: 2GB
@@ -156,27 +162,30 @@ Parameters:
     Default: 1
   BeyondocPdfRemediationMaxTasks:
     Type: Number
-    Default: 2
+    Default: 4
   BeyondocWorkerMinTasks:
     Type: Number
     Default: 1
   BeyondocWorkerMaxTasks:
     Type: Number
-    Default: 2
+    Default: 8
   EcsScalingEvaluationPeriods:
     Type: Number
     Default: 5
   RemediationScalingStrategy:
     Type: String
-    Default: REST-API
+    Default: CUSTOM
     AllowedValues:
       - CUSTOM
       - Disabled
       - REST-API
       - SQS
-  RemediationScalingThresholdRequests:
+  RemediationCpuScalingThreshold:
     Type: Number
-    Default: 100 #placeholder tbd
+    Default: 75
+  RemediationMemoryScalingThreshold:
+    Type: Number
+    Default: 75
   WorkerScalingStrategy:
     Type: String
     Default: CUSTOM
@@ -187,7 +196,7 @@ Parameters:
       - SQS
   WorkerCpuScalingThreshold:
     Type: Number
-    Default: 70
+    Default: 75
   WorkerMemoryScalingThreshold:
     Type: Number
     Default: 75
@@ -261,7 +270,15 @@ Parameters:
   PnPdfNormalizerTransformationCallbackLambdaAlbPriority:
     Type: Number
     Default: 105
-
+  RemediationHeartbeatMs:
+    Type: Number
+    Default: 30000
+  RemediationHeartbeatCheckMs:
+    Type: Number
+    Default: 50000
+  WorkerHeartbeatMs:
+    Type: Number
+    Default: 30000
 
 Conditions:
   IsRemediationScalingEnabled: !Not
@@ -274,6 +291,9 @@ Conditions:
       - Disabled
   IsWorkerScalingCustom: !Equals
     - !Ref WorkerScalingStrategy
+    - CUSTOM
+  IsRemediationScalingCustom: !Equals # Nuova condizione per Remediation
+    - !Ref RemediationScalingStrategy
     - CUSTOM
 
 Resources:
@@ -725,16 +745,16 @@ Resources:
         ContainerEnvEntry20: !Sub S3_BUCKET=${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
         ContainerEnvEntry21: !Sub S3_URL=https://s3.${AWS::Region}.amazonaws.com
         ContainerEnvEntry22: !Sub S3_REGION=${AWS::Region}
-        # Secret configuration
+        ContainerEnvEntry23: !Sub HEARTBEAT=${RemediationHeartbeatMs}
+        ContainerEnvEntry24: !Sub HEARTBEAT_CHECK=${RemediationHeartbeatCheckMs}
         ContainerSecret1: !Sub 'DB_PASSWORD=${SvcUserSecretArn}:password:AWSCURRENT:'
         MicroServiceSecretPrefix: pn-pdf-normalizer-db-svc-user-credentials
 
   BeyondocWorkerMicroservice:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/ecs-service-v2.yaml
+      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/ecs-service.yaml
       Parameters:
-        DisableAlbIntegration: true
         MicroServiceUniqueName: pn-pdf-normalizer-worker
         ECSClusterName: !Ref PdfRasterECSClusterName
         ContainerImageURI: !Ref BeyondocWorkerImageUri
@@ -745,8 +765,11 @@ Resources:
         VpcId: !Ref PdfRasterVpcId
         Subnets: !Ref PdfRasterVpcSubnets
         EcsDefaultSecurityGroup: !Ref EcsPdfNormalizerDefaultSecurityGroup
-        MappedPaths: /doc-worker-service/* #placeholder tbd
-        AlbSecurityGroup: ''
+        LoadBalancerListenerArn: !Ref PdfRasterApplicationLoadBalancerListenerArn
+        MappedPaths: !Sub ${WorkerAlbPath}
+        HealthCheckPath: !Ref WorkerHealthCheckPath
+        LoadbalancerRulePriority: !Ref WorkerAlbPriority
+        AlbSecurityGroup: !Ref PdfRasterWebappSecurityGroupId
         AutoscalingStrategy: !Ref WorkerScalingStrategy
         MinTasksNumber: !Ref BeyondocWorkerMinTasks
         MaxTasksNumber: !Ref BeyondocWorkerMaxTasks
@@ -754,11 +777,9 @@ Resources:
         MountEfs: !Ref BeyondocWorkerMountEfs
         EfsFilesystem: !Ref EfsFilesystemId
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-        # Database configuration
         ContainerEnvEntry1: !Sub DB_URL=jdbc:postgresql://${RdsEndpointAddress}:${RdsPort}/${RdsDbName}
         ContainerEnvEntry2: !Sub DB_USERNAME=${SvcUsername}
         ContainerEnvEntry3: DB_DRIVER_CLASS=org.postgresql.Driver
-        # HikariCP configuration
         ContainerEnvEntry4: HIKARI_MAX_POOL_SIZE=5
         ContainerEnvEntry5: HIKARI_MINIMUM_IDLE=2
         ContainerEnvEntry6: HIKARI_IDLE_TIMEOUT=300000
@@ -784,7 +805,8 @@ Resources:
         ContainerEnvEntry21: !Sub S3_BUCKET=${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
         ContainerEnvEntry22: !Sub S3_URL=https://s3.${AWS::Region}.amazonaws.com
         ContainerEnvEntry23: !Sub S3_REGION=${AWS::Region}
-        # Secret configuration
+        ContainerEnvEntry24: SERVER_PORT=8080
+        ContainerEnvEntry25: !Sub HEARTBEAT=${WorkerHeartbeatMs}
         ContainerSecret1: !Sub 'DB_PASSWORD=${SvcUserSecretArn}:password:AWSCURRENT:'
         MicroServiceSecretPrefix: pn-pdf-normalizer-db-svc-user-credentials
 
@@ -807,6 +829,54 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         DataPointsToAlarm: !Ref LambdaDataPointsToAlarm
         EvaluationPeriods: !Ref LambdaEvaluationPeriods
+
+  BeyondocPdfRemediationCpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsRemediationScalingCustom
+    Properties:
+      AlarmName: !Sub pn-pdfnorm-BeyondocPdfRemediation-CPU-Scaling-Alarm-${EnvType}
+      AlarmDescription: !Sub Trigger scaling for Remediation based on CPU > ${RemediationCpuScalingThreshold}%
+      Namespace: AWS/ECS
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref PdfRasterECSClusterName
+        - Name: ServiceName
+          Value: !GetAtt BeyondocPdfRemediationMicroservice.Outputs.ServiceName
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: !Ref EcsScalingEvaluationPeriods
+      Threshold: !Ref RemediationCpuScalingThreshold
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: breaching
+      AlarmActions:
+        - !GetAtt BeyondocPdfRemediationMicroservice.Outputs.ScaleUpPolicy
+      OKActions:
+        - !GetAtt BeyondocPdfRemediationMicroservice.Outputs.ScaleDownPolicy
+
+  BeyondocPdfRemediationMemoryAlarmScaling:
+    Type: AWS::CloudWatch::Alarm
+    Condition: IsRemediationScalingCustom
+    Properties:
+      AlarmName: !Sub pn-pdfnorm-BeyondocPdfRemediation-Memory-Scaling-Alarm-${EnvType}
+      AlarmDescription: !Sub Trigger scaling for Remediation based on Memory > ${RemediationMemoryScalingThreshold}%
+      Namespace: AWS/ECS
+      MetricName: MemoryUtilization
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref PdfRasterECSClusterName
+        - Name: ServiceName
+          Value: !GetAtt BeyondocPdfRemediationMicroservice.Outputs.ServiceName
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: !Ref EcsScalingEvaluationPeriods
+      Threshold: !Ref RemediationMemoryScalingThreshold
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: breaching
+      AlarmActions:
+        - !GetAtt BeyondocPdfRemediationMicroservice.Outputs.ScaleUpPolicy
+      OKActions:
+        - !GetAtt BeyondocPdfRemediationMicroservice.Outputs.ScaleDownPolicy
 
   BeyondocWorkerCpuAlarm:
     Type: AWS::CloudWatch::Alarm
