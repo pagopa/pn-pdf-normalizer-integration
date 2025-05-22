@@ -12,10 +12,9 @@
 
     "RemediationAlbPath": "/beyondoc/api/v1/notify-input-pdf-uploaded*",
 
-    "RemediationScalingStrategy": "REST-API",
+    "RemediationScalingStrategy": "CUSTOM",
     "BeyondocPdfRemediationMinTasks": "1",
     "BeyondocPdfRemediationMaxTasks": "1",
-    "RemediationScalingThresholdRequests": "50",
 
     "WorkerScalingStrategy": "CUSTOM",
     "BeyondocWorkerMinTasks": "1",

@@ -711,7 +711,6 @@ Resources:
         AutoscalingStrategy: !Ref RemediationScalingStrategy
         MinTasksNumber: !Ref BeyondocPdfRemediationMinTasks
         MaxTasksNumber: !Ref BeyondocPdfRemediationMaxTasks
-        AutoscalingThreshold: !Ref RemediationScalingThresholdRequests
         DisableOtelXRay: !Ref BeyondocPdfRemediationDisableOtel
         MountEfs: !Ref BeyondocPdfRemediationMountEfs
         EfsFilesystem: !Ref EfsFilesystemId
