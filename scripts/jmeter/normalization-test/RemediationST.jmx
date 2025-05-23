@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.5">
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
   <hashTree>
     <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan" enabled="true">
       <stringProp name="TestPlan.comments"></stringProp>
@@ -12,38 +12,32 @@
       <stringProp name="TestPlan.user_define_classpath"></stringProp>
     </TestPlan>
     <hashTree>
-      <OpenModelThreadGroup guiclass="OpenModelThreadGroupGui" testclass="OpenModelThreadGroup" testname="Open Model Thread Group" enabled="true">
-        <elementProp name="ThreadGroup.main_controller" elementType="OpenModelThreadGroupController"/>
+      <OpenModelThreadGroup guiclass="OpenModelThreadGroupGui" testclass="OpenModelThreadGroup" testname="Open Model Thread Group">
+        <stringProp name="OpenModelThreadGroup.schedule">random_arrivals(5 s) rate(2/s) even_arrivals(5 s) random_arrivals(5 s) rate(0/s) pause(5 s)</stringProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
-        <stringProp name="OpenModelThreadGroup.schedule">rate(1/s) random_arrivals(10 s) pause(10s)</stringProp>
-        <stringProp name="OpenModelThreadGroup.random_seed"></stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="OpenModelThreadGroupController"/>
       </OpenModelThreadGroup>
       <hashTree>
         <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
           <collectionProp name="Arguments.arguments">
-            <elementProp name="input_pdf_path" elementType="Argument">
-              <stringProp name="Argument.name">input_pdf_path</stringProp>
-              <stringProp name="Argument.value">${__P(input_pdf_path)}</stringProp>
+            <elementProp name="INPUT_PDF_PATH" elementType="Argument">
+              <stringProp name="Argument.name">INPUT_PDF_PATH</stringProp>
+              <stringProp name="Argument.value">${__P(INPUT_PDF_PATH,TEST.pdf)}</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
             <elementProp name="BUCKET_NAME" elementType="Argument">
               <stringProp name="Argument.name">BUCKET_NAME</stringProp>
-              <stringProp name="Argument.value">pn-safestorage-staging-eu-south-1-089813480515</stringProp>
-              <stringProp name="Argument.metadata">=</stringProp>
-            </elementProp>
-            <elementProp name="FILE_PATH" elementType="Argument">
-              <stringProp name="Argument.name">FILE_PATH</stringProp>
-              <stringProp name="Argument.value">TEST.pdf</stringProp>
+              <stringProp name="Argument.value">${__P(BUCKET_NAME)}</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
             <elementProp name="QUEUE_URL" elementType="Argument">
               <stringProp name="Argument.name">QUEUE_URL</stringProp>
-              <stringProp name="Argument.value">https://sqs.eu-south-1.amazonaws.com/089813480515/pn-ss-transformation-normalizer-queue</stringProp>
+              <stringProp name="Argument.value">${__P(QUEUE_URL)}</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
             <elementProp name="AWS_PROFILE" elementType="Argument">
               <stringProp name="Argument.name">AWS_PROFILE</stringProp>
-              <stringProp name="Argument.value">dev_confinfo</stringProp>
+              <stringProp name="Argument.value">${__P(AWS_PROFILE)}</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
           </collectionProp>
@@ -55,7 +49,7 @@
           <stringProp name="outputFormat">TEST_NORMALIZATION-${__RandomString(10,abcdefghijklmnopqrstuvwxyz,)}-0000000000.pdf</stringProp>
           <boolProp name="perThread">true</boolProp>
           <stringProp name="randomSeed"></stringProp>
-          <stringProp name="variableName">rand_fileKey</stringProp>
+          <stringProp name="variableName">RAND_FILE_KEY</stringProp>
         </RandomVariableConfig>
         <hashTree/>
         <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Json Payload Generator" enabled="true">
@@ -64,12 +58,10 @@
           <stringProp name="parameters"></stringProp>
           <stringProp name="script">import groovy.json.JsonOutput
 
-// Prendi la variabile FILE_KEY da JMeter
-def fileKey = vars.get(&quot;rand_fileKey&quot;)
+def fileKey = vars.get(&quot;RAND_FILE_KEY&quot;)
 if (!fileKey) {
     throw new IllegalArgumentException(&quot;La variabile rand_fileKey non è presente tra le variabili JMeter.&quot;)
 }
-// Crea l&apos;oggetto body
 def body = [
     &quot;fileKey&quot;           : fileKey,
     &quot;transformationType&quot;: &quot;NORMALIZATION&quot;,
@@ -77,21 +69,20 @@ def body = [
     &quot;contentType&quot;       : &quot;application/pdf&quot;
 ]
 
-// Serializza il body come stringa JSON
 def jsonBody = JsonOutput.toJson(body)
 
 log.info(jsonBody)
-// Salva la stringa JSON (non escapeata) in una variabile JMeter
-vars.put(&quot;jsonPayload&quot;, jsonBody)
+
+vars.put(&quot;JSON_PAYLOAD&quot;, jsonBody)
 </stringProp>
           <stringProp name="scriptLanguage">groovy</stringProp>
         </JSR223PreProcessor>
         <hashTree/>
         <SystemSampler guiclass="SystemSamplerGui" testclass="SystemSampler" testname="S3 Upload and SQS Send" enabled="true">
-          <boolProp name="SystemSampler.checkReturnCode">false</boolProp>
+          <boolProp name="SystemSampler.checkReturnCode">true</boolProp>
           <stringProp name="SystemSampler.expectedReturnCode">0</stringProp>
           <stringProp name="SystemSampler.command">/bin/bash</stringProp>
-          <elementProp name="SystemSampler.arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+          <elementProp name="SystemSampler.arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="Argument">
                 <stringProp name="Argument.name"></stringProp>
@@ -100,7 +91,7 @@ vars.put(&quot;jsonPayload&quot;, jsonBody)
               </elementProp>
               <elementProp name="" elementType="Argument">
                 <stringProp name="Argument.name"></stringProp>
-                <stringProp name="Argument.value">${FILE_PATH}</stringProp>
+                <stringProp name="Argument.value">${INPUT_PDF_PATH}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="" elementType="Argument">
@@ -110,7 +101,7 @@ vars.put(&quot;jsonPayload&quot;, jsonBody)
               </elementProp>
               <elementProp name="" elementType="Argument">
                 <stringProp name="Argument.name"></stringProp>
-                <stringProp name="Argument.value">${rand_fileKey}</stringProp>
+                <stringProp name="Argument.value">${RAND_FILE_KEY}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="" elementType="Argument">
@@ -120,16 +111,22 @@ vars.put(&quot;jsonPayload&quot;, jsonBody)
               </elementProp>
               <elementProp name="" elementType="Argument">
                 <stringProp name="Argument.name"></stringProp>
-                <stringProp name="Argument.value">${jsonPayload}</stringProp>
+                <stringProp name="Argument.value">${JSON_PAYLOAD}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+              <elementProp name="" elementType="Argument">
+                <stringProp name="Argument.name"></stringProp>
+                <stringProp name="Argument.value">${AWS_PROFILE}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
           </elementProp>
-          <elementProp name="SystemSampler.environment" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+          <elementProp name="SystemSampler.environment" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
           <stringProp name="SystemSampler.directory"></stringProp>
           <stringProp name="SystemSampler.stdout">script.log</stringProp>
+          <longProp name="SystemSampler.timeout">30000</longProp>
         </SystemSampler>
         <hashTree/>
         <BeanShellListener guiclass="TestBeanGUI" testclass="BeanShellListener" testname="BeanShell Listener" enabled="true">
@@ -137,9 +134,9 @@ vars.put(&quot;jsonPayload&quot;, jsonBody)
           <stringProp name="parameters"></stringProp>
           <boolProp name="resetInterpreter">false</boolProp>
           <stringProp name="script">if (prev.isSuccessful()){
-FileWriter f = new FileWriter(&quot;output.csv&quot;, true);
+FileWriter f = new FileWriter(&quot;fileKeys.csv&quot;, true);
 BufferedWriter out = new BufferedWriter(f);
-out.write(vars.get(&quot;rand_fileKey&quot;) + &quot;\n&quot;);
+out.write(vars.get(&quot;RAND_FILE_KEY&quot;) + &quot;\n&quot;);
 out.close();
 f.close();
 }</stringProp>
