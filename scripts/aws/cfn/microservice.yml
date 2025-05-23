@@ -84,33 +84,15 @@ Parameters:
   PnPdfNormalizerTransformationQueueArn:
     Type: String
     Description: 'Queue ARN for the normalization queue'
-  NormalizedPDFHookLambdaName:
-    Type: String
-    Default: NormalizedPDFHook
-  NormalizedPDFHookReservedConcurrency:
-    Type: Number
-    Default: 5
   NormalizerTransformationHandlerReservedConcurrency:
     Type: Number
     Default: 5
-  NormalizedPDFHookMemorySize:
-    Type: Number
-    Default: 512
   NormalizerTransformationHandlerMemorySize:
     Type: Number
     Default: 512
-  NormalizedPDFHookTimeout:
-    Type: Number
-    Default: 60
   NormalizerTransformationHandlerTimeout:
     Type: Number
     Default: 60
-  LambdaAlbPath:
-    Type: String
-    Default: /NotifyOutputPDFUploaded
-  LambdaAlbPriority:
-    Type: Number
-    Default: 105
   LambdaListenerPort:
     Type: Number
     Default: 8080
@@ -218,9 +200,6 @@ Parameters:
   EfsFilesystemId:
     Type: String
     Default: '-'
-  LambdaErrorThreshold:
-    Type: Number
-    Default: 1
   LambdaDataPointsToAlarm:
     Type: Number
     Default: 1
@@ -233,9 +212,6 @@ Parameters:
   EcsMemoryAlarmEvaluationPeriods:
     Type: Number
     Default: 5
-  NormalizedPDFHookLogGroupName:
-    Type: String
-    Description: Log Group name for Lambda (from storage stack)
   BeyondocPdfRemediationLogGroupName:
     Type: String
     Description: Log Group name for pdf-remediation-service (from storage stack)
@@ -277,20 +253,6 @@ Conditions:
     - CUSTOM
 
 Resources:
-  NormalizedPDFHookLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub pn-pdf-normalizer-integration-NormalizedPDFHookRole
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-
   PnPdfNormalizerTransformationHandlerLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -304,32 +266,6 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole'
-
-  NormalizedPDFHookLambdaPolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: !Sub pn-pdf-normalizer-integration-NormalizedPDFHookPolicy
-      Roles:
-        - !Ref NormalizedPDFHookLambdaRole
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Sid: AllowS3AccessSafeStorage
-            Effect: Allow
-            Action:
-              - s3:GetObject*
-              - s3:PutObjectTagging
-            Resource:
-              - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
-              - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}/*
-          - Sid: AllowKMSAccessSafeStorage
-            Effect: Allow
-            Action:
-              - kms:Decrypt
-            Resource: '*'
-            Condition:
-              StringEquals:
-                aws:ResourceTag/KeyType: !Ref PnSsKmsKeyTagValue
 
   PnPdfNormalizerTransformationCallbackLambdaRole:
     Type: AWS::IAM::Role
@@ -421,29 +357,6 @@ Resources:
               StringEquals:
                 aws:ResourceTag/KeyType: !Ref PnSsKmsKeyTagValue
 
-  NormalizedPDFHookLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: !Sub pn-pdf-normalizer-integration-${NormalizedPDFHookLambdaName}
-      Runtime: nodejs18.x
-      Handler: index.handler
-      Role: !GetAtt NormalizedPDFHookLambdaRole.Arn
-      Code:
-        S3Bucket: !Ref LambdasBucketName
-        S3Key: !Sub ${BucketBasePath}/NormalizedPDFHook.zip
-      MemorySize: !Ref NormalizedPDFHookMemorySize
-      Timeout: !Ref NormalizedPDFHookTimeout
-      ReservedConcurrentExecutions: !Ref NormalizedPDFHookReservedConcurrency
-      Environment:
-        Variables:
-          REGION: !Ref AWS::Region
-          PN_SS_STAGING_BUCKET: !Sub ${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
-      Tags:
-        - Key: Name
-          Value: !Sub pn-pdf-normalizer-integration-${NormalizedPDFHookLambdaName}
-        - Key: Environment
-          Value: !Ref EnvType
-
   PnPdfNormalizerTransformationCallbackLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -505,18 +418,6 @@ Resources:
         - ReportBatchItemFailures
       MaximumBatchingWindowInSeconds: 0 #default value
 
-  LambdaTargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      Name: !Sub pn-pdfnorm-lambda-tg-${EnvType}
-      TargetType: lambda
-      Targets:
-        - Id: !GetAtt NormalizedPDFHookLambda.Arn
-      HealthCheckEnabled: false
-      Tags:
-        - Key: Environment
-          Value: !Ref EnvType
-
   PnPdfNormalizerTransformationCallbackTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
@@ -529,34 +430,12 @@ Resources:
         - Key: Environment
           Value: !Ref EnvType
 
-  LambdaInvokePermissionAlb:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !GetAtt NormalizedPDFHookLambda.Arn
-      Action: lambda:InvokeFunction
-      Principal: elasticloadbalancing.amazonaws.com
-      # SourceArn: placeholder tbd
-
   PnPdfNormalizerTransformationCallbackLambdaInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !GetAtt PnPdfNormalizerTransformationCallbackLambda.Arn
       Action: lambda:InvokeFunction
       Principal: elasticloadbalancing.amazonaws.com
-
-  AlbListenerRuleLambda:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      ListenerArn: !Ref PdfRasterApplicationLoadBalancerListenerArn
-      Priority: !Ref LambdaAlbPriority
-      Actions:
-        - Type: forward
-          TargetGroupArn: !Ref LambdaTargetGroup
-      Conditions:
-        - Field: path-pattern
-          PathPatternConfig:
-            Values:
-              - !Ref LambdaAlbPath
 
   PnPdfNormalizerTransformationCallbackListenerRuleLambda:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -788,16 +667,6 @@ Resources:
         ContainerSecret1: !Sub 'DB_PASSWORD=${SvcUserSecretArn}:password:AWSCURRENT:'
         MicroServiceSecretPrefix: pn-pdf-normalizer-db-svc-user-credentials
 
-  NormalizedPDFHookLambdaAlarms:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/lambda-alarms.yaml
-      Parameters:
-        FunctionName: !Ref NormalizedPDFHookLambda
-        AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
-        DataPointsToAlarm: !Ref LambdaDataPointsToAlarm
-        EvaluationPeriods: !Ref LambdaEvaluationPeriods
-
   NormalizerTransformationHandlerAlarms:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -903,15 +772,9 @@ Resources:
       TreatMissingData: breaching
 
 Outputs:
-  NormalizedPDFHookLambdaArn:
-    Description: ARN of the NormalizedPDFHook Lambda function
-    Value: !GetAtt NormalizedPDFHookLambda.Arn
   NormalizerTransformationHandlerArn:
     Description: ARN of the NormalizerTransformationHandler Lambda function
     Value: !GetAtt PnPdfNormalizerTransformationHandlerLambda.Arn
-  LambdaTargetGroupArn:
-    Description: ARN of the Target Group for the Lambda
-    Value: !Ref LambdaTargetGroup
   BeyondocPdfRemediationServiceName:
     Description: Name of the Beyondoc Pdf Remediation ECS Service
     Value: !GetAtt BeyondocPdfRemediationMicroservice.Outputs.ServiceName
