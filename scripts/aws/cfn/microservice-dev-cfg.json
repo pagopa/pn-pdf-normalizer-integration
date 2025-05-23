@@ -1,7 +1,7 @@
 {
   "Parameters": {
-    "BeyondocPdfRemediationImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/pdf-remediation-service:main-1.0.8",
-    "BeyondocWorkerImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/worker-service:main-1.0.6",
+    "BeyondocPdfRemediationImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/pdf-remediation-service:main-1.0.12",
+    "BeyondocWorkerImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/worker-service:main-1.0.11",
 
     "NormalizedPDFHookReservedConcurrency": "1",
 
@@ -12,10 +12,9 @@
 
     "RemediationAlbPath": "/beyondoc/api/v1/notify-input-pdf-uploaded*",
 
-    "RemediationScalingStrategy": "REST-API",
+    "RemediationScalingStrategy": "CUSTOM",
     "BeyondocPdfRemediationMinTasks": "1",
     "BeyondocPdfRemediationMaxTasks": "1",
-    "RemediationScalingThresholdRequests": "50",
 
     "WorkerScalingStrategy": "CUSTOM",
     "BeyondocWorkerMinTasks": "1",
