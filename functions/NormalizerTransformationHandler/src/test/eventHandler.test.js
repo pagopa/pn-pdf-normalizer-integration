@@ -193,3 +193,4 @@ describe("Lambda BeyonDoc - handleEvent", () => {
     s3MockClient.reset();
   });
 });
+
