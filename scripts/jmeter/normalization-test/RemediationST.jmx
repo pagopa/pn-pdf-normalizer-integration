@@ -13,12 +13,12 @@
     </TestPlan>
     <hashTree>
       <OpenModelThreadGroup guiclass="OpenModelThreadGroupGui" testclass="OpenModelThreadGroup" testname="Open Model Thread Group">
-        <stringProp name="OpenModelThreadGroup.schedule">rate(1/s) even_arrivals(1 s)  pause(60 s)</stringProp>
+        <stringProp name="OpenModelThreadGroup.schedule">rate(30/s) even_arrivals(1 s)  pause(60 s)</stringProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="OpenModelThreadGroupController"/>
       </OpenModelThreadGroup>
       <hashTree>
-        <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
           <collectionProp name="Arguments.arguments">
             <elementProp name="INPUT_PDF_PATH" elementType="Argument">
               <stringProp name="Argument.name">INPUT_PDF_PATH</stringProp>
@@ -72,7 +72,7 @@
           <stringProp name="variableName">RAND_FILE_KEY</stringProp>
         </RandomVariableConfig>
         <hashTree/>
-        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Json Payload Generator">
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Json Payload Generator" enabled="true">
           <stringProp name="cacheKey">true</stringProp>
           <stringProp name="filename"></stringProp>
           <stringProp name="parameters"></stringProp>
@@ -98,57 +98,6 @@ vars.put(&quot;JSON_PAYLOAD&quot;, jsonBody)
           <stringProp name="scriptLanguage">groovy</stringProp>
         </JSR223PreProcessor>
         <hashTree/>
-        <SystemSampler guiclass="SystemSamplerGui" testclass="SystemSampler" testname="S3 Upload and SQS Send" enabled="false">
-          <boolProp name="SystemSampler.checkReturnCode">true</boolProp>
-          <stringProp name="SystemSampler.expectedReturnCode">0</stringProp>
-          <stringProp name="SystemSampler.command">/bin/bash</stringProp>
-          <elementProp name="SystemSampler.arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
-            <collectionProp name="Arguments.arguments">
-              <elementProp name="" elementType="Argument">
-                <stringProp name="Argument.name"></stringProp>
-                <stringProp name="Argument.value">script.sh</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="" elementType="Argument">
-                <stringProp name="Argument.name"></stringProp>
-                <stringProp name="Argument.value">${INPUT_PDF_PATH}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="" elementType="Argument">
-                <stringProp name="Argument.name"></stringProp>
-                <stringProp name="Argument.value">${BUCKET_NAME}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="" elementType="Argument">
-                <stringProp name="Argument.name"></stringProp>
-                <stringProp name="Argument.value">${RAND_FILE_KEY}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="" elementType="Argument">
-                <stringProp name="Argument.name"></stringProp>
-                <stringProp name="Argument.value">${QUEUE_URL}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="" elementType="Argument">
-                <stringProp name="Argument.name"></stringProp>
-                <stringProp name="Argument.value">${JSON_PAYLOAD}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="" elementType="Argument">
-                <stringProp name="Argument.name"></stringProp>
-                <stringProp name="Argument.value">${AWS_PROFILE}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-            </collectionProp>
-          </elementProp>
-          <elementProp name="SystemSampler.environment" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
-            <collectionProp name="Arguments.arguments"/>
-          </elementProp>
-          <stringProp name="SystemSampler.directory"></stringProp>
-          <stringProp name="SystemSampler.stdout">script.log</stringProp>
-          <longProp name="SystemSampler.timeout">30000</longProp>
-        </SystemSampler>
-        <hashTree/>
         <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="JSR223 S3 Sampler">
           <stringProp name="cacheKey">true</stringProp>
           <stringProp name="filename"></stringProp>
@@ -167,6 +116,8 @@ import org.apache.jmeter.samplers.SampleResult
 
 import java.nio.file.Paths
 
+try {
+	
 def bucket = vars.get(&quot;BUCKET_NAME&quot;)
 def key = vars.get(&quot;RAND_FILE_KEY&quot;)
 def filePath = vars.get(&quot;INPUT_PDF_PATH&quot;)
@@ -180,7 +131,6 @@ sample.setSampleLabel(&quot;S3 Upload&quot;)
 def thread =  Thread.currentThread().name
 log.info(&quot;Executing on thread: $thread&quot; )
 sample.sampleStart()
-
 
 def credentials = awsProfile = null || awsProfile.trim().isEmpty() || (awsProfile ==~ /\d+/) ? DefaultCredentialsProvider.create() : ProfileCredentialsProvider.create(awsProfile)
 
@@ -208,6 +158,10 @@ sample.setSuccessful(true)
 sample.setResponseMessage(&quot;Upload completed&quot;)
 sample.setResponseCode(&quot;200&quot;)
 sample.sampleEnd()
+} catch (Throwable e) {
+	throw new RuntimeException(e.getMessage())
+}
+
 </stringProp>
           <stringProp name="scriptLanguage">groovy</stringProp>
         </JSR223Sampler>
@@ -223,6 +177,8 @@ import software.amazon.awssdk.services.sqs.SqsClient
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse
 import org.apache.jmeter.samplers.SampleResult
+
+try{
 
 def queueUrl = vars.get(&quot;QUEUE_URL&quot;)
 def payload = vars.get(&quot;JSON_PAYLOAD&quot;)
@@ -261,64 +217,15 @@ SendMessageResponse response = sqs.sendMessage(sendRequest)
 if (!response.sdkHttpResponse().isSuccessful()) {
    throw new RuntimeException(&quot;SQS sendMessage failed with HTTP ${response.sdkHttpResponse().statusCode()}&quot;)
 }
+
+} catch (Throwable e) {
+	throw new RuntimeException(e.getMessage())
+}
 </stringProp>
           <stringProp name="scriptLanguage">groovy</stringProp>
         </JSR223Sampler>
         <hashTree/>
-        <JavaSampler guiclass="JavaTestSamplerGui" testclass="JavaSampler" testname="SQS producer" enabled="false">
-          <elementProp name="arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments">
-            <collectionProp name="Arguments.arguments">
-              <elementProp name="aws_access_key_id" elementType="Argument">
-                <stringProp name="Argument.name">aws_access_key_id</stringProp>
-                <stringProp name="Argument.value"></stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="aws_secret_access_key" elementType="Argument">
-                <stringProp name="Argument.name">aws_secret_access_key</stringProp>
-                <stringProp name="Argument.value"></stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="aws_session_token" elementType="Argument">
-                <stringProp name="Argument.name">aws_session_token</stringProp>
-                <stringProp name="Argument.value"></stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="aws_region" elementType="Argument">
-                <stringProp name="Argument.name">aws_region</stringProp>
-                <stringProp name="Argument.value">${AWS_REGION}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="aws_configure_profile" elementType="Argument">
-                <stringProp name="Argument.name">aws_configure_profile</stringProp>
-                <stringProp name="Argument.value">${AWS_PROFILE}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="sqs_queue_name" elementType="Argument">
-                <stringProp name="Argument.name">sqs_queue_name</stringProp>
-                <stringProp name="Argument.value">${QUEUE_NAME}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="sqs_msg_body" elementType="Argument">
-                <stringProp name="Argument.name">sqs_msg_body</stringProp>
-                <stringProp name="Argument.value">${JSON_PAYLOAD}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="sqs_msg_attributes" elementType="Argument">
-                <stringProp name="Argument.name">sqs_msg_attributes</stringProp>
-                <stringProp name="Argument.value">${SQS_ATTRIBUTES}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-              <elementProp name="sqs_delay_seconds" elementType="Argument">
-                <stringProp name="Argument.name">sqs_delay_seconds</stringProp>
-                <stringProp name="Argument.value">${SQS_DELAY_SECONDS}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-              </elementProp>
-            </collectionProp>
-          </elementProp>
-          <stringProp name="classname">org.apache.jmeter.protocol.aws.sqs.SQSProducerStandardQueue</stringProp>
-        </JavaSampler>
-        <hashTree/>
-        <BeanShellListener guiclass="TestBeanGUI" testclass="BeanShellListener" testname="BeanShell Listener" enabled="true">
+        <BeanShellListener guiclass="TestBeanGUI" testclass="BeanShellListener" testname="BeanShell Listener">
           <stringProp name="filename"></stringProp>
           <stringProp name="parameters"></stringProp>
           <boolProp name="resetInterpreter">false</boolProp>
