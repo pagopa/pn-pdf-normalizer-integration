@@ -129,7 +129,7 @@ Parameters:
     Default: /metrics
   WorkerHealthCheckPath:
     Type: String
-    Default: /actuator/health
+    Default: '/actuator/health'
   WorkerAlbPriority:
     Type: Number
     Default: 115
@@ -489,7 +489,7 @@ Resources:
       Role: !GetAtt PnPdfNormalizerWorkerServiceMetricsCollectorLambdaRole.Arn
       Code:
         S3Bucket: !Ref LambdasBucketName
-        S3Key: !Sub ${TestWorkerBucketBasePath}/WorkerServiceMetricsCollector.zip
+        S3Key: !Sub ${BucketBasePath}/WorkerServiceMetricsCollector.zip
       Runtime: nodejs22.x
       MemorySize: !Ref PnPdfNormalizerWorkerServiceMetricsCollectorMemorySize
       Timeout: !Ref PnPdfNormalizerWorkerServiceMetricsCollectorTimeout
