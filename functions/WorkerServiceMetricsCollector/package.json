@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "test-build": "npm run-script test && npm run-script coverage && npm run-script sonar && npm run-script build",
-    "build": "npm prune --production && rm -f ./function.zip && zip -r ./function.zip . -x './src/test/*' -x '*.md' -x '*.env'  -x './coverage/*' -x './.nyc_output/*' -x './.scannerwork/*' -x 'node_modules/@aws-sdk/*'",
+    "build": "npm prune --production && rm -f ./WorkerServiceMetricsCollector.zip && zip -r ./WorkerServiceMetricsCollector.zip . -x './src/test/*' -x '*.md' -x '*.env'  -x './coverage/*' -x './.nyc_output/*' -x './.scannerwork/*' -x 'node_modules/@aws-sdk/*'",
     "test": "nyc --reporter=html --reporter=text mocha './src/test/**/*.test.js' --recursive --timeout=5000 --exit -r dotenv/config",
     "coverage": "nyc report --reporter=lcov",
     "sonar": "node sonarqube-scanner.js -Dsonar.login=${SONAR_TOKEN}"

@@ -126,20 +126,20 @@ describe("BeyondocWorkerMetricsCollector - EventHandler", () => {
     }
   });
 
-  it("should re-throw error if fetchMetrics helper fails", async () => {
+  it("should propagate error if fetchMetrics helper fails", async () => {
     const eventHandler = loadHandler(metricsHelperMock);
     const fetchError = new Error("Network connection failed");
     metricsHelperMock.fetchMetrics.rejects(fetchError);
 
     try {
       await eventHandler.handleEvent({}, {});
-      expect.fail("handleEvent should have re-thrown the error");
+      expect.fail("handleEvent should have propagated the error");
     } catch (error) {
-      expect(error.message).to.equal(`Failed to fetch metrics: ${fetchError.message}`);
+      expect(error).to.equal(fetchError);
     }
   });
 
-  it("should re-throw error if parseWorkerScaleRequested helper fails", async () => {
+  it("should propagate error if parseWorkerScaleRequested helper fails", async () => {
     const eventHandler = loadHandler(metricsHelperMock);
     metricsHelperMock.fetchMetrics.resolves("some response");
     const parseError = new Error("Invalid metric format");
@@ -147,13 +147,13 @@ describe("BeyondocWorkerMetricsCollector - EventHandler", () => {
 
     try {
       await eventHandler.handleEvent({}, {});
-      expect.fail("handleEvent should have re-thrown the error");
+      expect.fail("handleEvent should have propagated the error");
     } catch (error) {
-      expect(error.message).to.equal(`Failed to parse metrics: ${parseError.message}`);
+      expect(error).to.equal(parseError);
     }
   });
 
-  it("should re-throw error if publishMetricToCloudWatch helper fails", async () => {
+  it("should propagate error if publishMetricToCloudWatch helper fails", async () => {
     const eventHandler = loadHandler(metricsHelperMock);
     metricsHelperMock.fetchMetrics.resolves("worker_scale_requested 10");
     metricsHelperMock.parseWorkerScaleRequested.returns(10);
@@ -162,9 +162,9 @@ describe("BeyondocWorkerMetricsCollector - EventHandler", () => {
 
     try {
       await eventHandler.handleEvent({}, {});
-      expect.fail("handleEvent should have re-thrown the error");
+      expect.fail("handleEvent should have propagated the error");
     } catch (error) {
-      expect(error.message).to.equal(`Failed to publish metric: ${publishError.message}`);
+      expect(error).to.equal(publishError);
     }
   });
 });

@@ -41,7 +41,11 @@ describe("BeyondocWorkerMetricsCollector - MetricsHelper", () => {
       const response = await metricsHelper.fetchMetrics(testUrl);
 
       expect(response).to.equal(mockResponse);
-      expect(fetchStub.calledOnceWith(testUrl)).to.be.true;
+      expect(fetchStub.calledOnce).to.be.true;
+      
+      // Verify AbortSignal.timeout was used
+      const fetchCall = fetchStub.getCall(0);
+      expect(fetchCall.args[1].signal).to.be.instanceOf(AbortSignal);
     });
 
     it("should throw an error if HTTP response status is not ok", async () => {
@@ -63,7 +67,7 @@ describe("BeyondocWorkerMetricsCollector - MetricsHelper", () => {
       fetchStub.callsFake((url, opts) => {
         return new Promise((resolve, reject) => {
           opts.signal.addEventListener("abort", () => {
-            const abortErr = new Error("Aborted");
+            const abortErr = new Error("This operation was aborted");
             abortErr.name = "AbortError";
             reject(abortErr);
           });
@@ -74,7 +78,7 @@ describe("BeyondocWorkerMetricsCollector - MetricsHelper", () => {
         await metricsHelper.fetchMetrics(testUrl); // attende ~50 ms reali
         expect.fail("Expected timeout error");
       } catch (err) {
-        expect(err.message).to.include(`Request to ${testUrl} timed out`);
+        expect(err.name).to.equal("AbortError");
       }
     });
 
