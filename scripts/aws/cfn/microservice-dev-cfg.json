@@ -3,37 +3,18 @@
     "BeyondocPdfRemediationImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/pdf-remediation-service:main-1.0.12",
     "BeyondocWorkerImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/worker-service:main-1.0.11",
 
-    "NormalizedPDFHookReservedConcurrency": "1",
-
     "BeyondocPdfRemediationCpu": "1024",
     "BeyondocPdfRemediationMemory": "2GB",
+    "BeyondocPdfRemediationMinTasks": "1",
+    "BeyondocPdfRemediationMaxTasks": "4",
+
     "BeyondocWorkerCpu": "1024",
     "BeyondocWorkerMemory": "2GB",
-
-    "RemediationAlbPath": "/beyondoc/api/v1/notify-input-pdf-uploaded*",
-
-    "RemediationScalingStrategy": "CUSTOM",
-    "BeyondocPdfRemediationMinTasks": "1",
-    "BeyondocPdfRemediationMaxTasks": "1",
-
-    "WorkerScalingStrategy": "CUSTOM",
     "BeyondocWorkerMinTasks": "1",
-    "BeyondocWorkerMaxTasks": "1",
-    "WorkerCpuScalingThreshold": "80",
-    "WorkerMemoryScalingThreshold": "80",
-    "EcsScalingEvaluationPeriods": "2",
+    "BeyondocWorkerMaxTasks": "8",
+    "WorkerLoadPercentageScalingThreshold": "50",
+    "A4TolerancePercentage": "200",
 
-    "BeyondocPdfRemediationDisableOtel": "true",
-    "BeyondocWorkerDisableOtel": "true",
-    "BeyondocPdfRemediationMountEfs": "false",
-    "BeyondocWorkerMountEfs": "false",
-
-    "LambdaAlbPriority": "100",
-    "RemediationAlbPriority": "110",
-
-    "EcsMemoryAlarmThreshold": "90",
-    "PnPdfNormalizerTransformationCallbackLambdaAlbPath": "/beyondoc/api/v1/notify-output-pdf-uploaded",
-    "BeyondocApiUrl" : "/beyondoc/api/v1/notify-input-pdf-uploaded",
-    "NormalizerMargins" : "2"
+    "NormalizerMargins" : "0"
   }
 }

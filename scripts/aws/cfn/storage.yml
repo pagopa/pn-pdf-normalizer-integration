@@ -64,7 +64,7 @@ Parameters:
     Default: 0.5
   RdsMaxACU:
     Type: Number
-    Default: 2
+    Default: 8
   RdsBackupRetentionPeriod:
     Type: Number
     Default: 7
@@ -176,7 +176,6 @@ Resources:
         AlarmSNSTopicArn: !Ref AlarmSNSTopicArn
         DbCpuAlarmThreshold: !Ref RdsDbCpuAlarmThreshold
         DbConnectionsAlarmThreshold: !Ref RdsDbConnectionsAlarmThreshold
-        # SourceSecurityGroupIdForDbAccess: not in use, tbd
 
   PnPdfNormalizerTransformationQueueStack:
     Type: AWS::CloudFormation::Stack
@@ -236,9 +235,6 @@ Outputs:
   RdsDbName:
     Description: RDS Database Name
     Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.RdsDbName
-  #   RdsMasterUserSecretArn:
-  #     Description: "ARN of the Secret Manager secret for RDS master user"
-  #     Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.RdsMasterUserSecretArn
   RdsSecurityGroupId:
     Description: ID of the Security Group attached to the RDS cluster
     Value: !GetAtt PnPdfNormalizerAuroraDbCluster.Outputs.RdsSecurityGroupId
@@ -263,3 +259,14 @@ Outputs:
   PnPdfNormalizerTransformationQueueArn:
     Description: 'ARN coda per trasformation'
     Value: !GetAtt PnPdfNormalizerTransformationQueueStack.Outputs.QueueARN
+  
+  # Lambda functions names used by microservice.yml 
+  PnPdfNormalizerTransformationHandlerLambdaName:
+    Value: !Sub "${ProjectName}-pdf-normalizer-integration-NormalizerTransformationHandler"
+
+  PnPdfNormalizerTransformationCallbackLambdaName:
+    Value: !Sub "${ProjectName}-pdf-normalizer-integration-NormalizerTransformationCallback"
+
+  PnPdfNormalizerWorkerMetricsCollectorLambdaName:
+    Value: !Sub "${ProjectName}-pdf-normalizer-integration-WorkerServiceMetricsCollector"
+

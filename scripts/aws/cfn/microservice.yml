@@ -63,6 +63,7 @@ Parameters:
     Description: ID of the Security Group attached to the RDS cluster (from storage stack)
   BeyondocApiUrl:
     Type: String
+    Default: /beyondoc/api/v1/notify-input-pdf-uploaded
     Description: Url API BEYONDOC
   NormalizerMargins:
     Type: String
@@ -111,7 +112,7 @@ Parameters:
     Description: Suffix to make RDS cluster unique
   BeyondocPdfRemediationCpu:
     Type: Number
-    Default: 2048
+    Default: 1024
   BeyondocPdfRemediationMemory:
     Type: String
     Default: 2GB
@@ -136,7 +137,7 @@ Parameters:
     Description: ALB listener rule priority for Worker service (if exposed)
   BeyondocWorkerCpu:
     Type: Number
-    Default: 2048
+    Default: 1024
   BeyondocWorkerMemory:
     Type: String
     Default: 2GB
@@ -243,6 +244,7 @@ Parameters:
   PnPdfNormalizerTransformationCallbackLambdaAlbPath:
     Type: String
     Description: Path for the PnPdfNormalizerTransformationCallback Lambda
+    Default: /beyondoc/api/v1/notify-output-pdf-uploaded
   PnPdfNormalizerTransformationCallbackLambdaAlbPriority:
     Type: Number
     Default: 105
@@ -255,6 +257,9 @@ Parameters:
   WorkerHeartbeatMs:
     Type: Number
     Default: 30000
+  A4TolerancePercentage:
+    Type: Number
+    Default: 200
   PnPdfNormalizerWorkerServiceMetricsCollectorLambdaName:
     Type: String
     Default: WorkerServiceMetricsCollector
@@ -806,7 +811,7 @@ Resources:
         # Worker configuration
         ContainerEnvEntry16: SERVICE_NAME=workerservice
         ContainerEnvEntry17: CRON=*/10 * * * * ?
-        ContainerEnvEntry18: A4_TOLERANCE_PERCENTAGE=1
+        ContainerEnvEntry18: !Sub A4_TOLERANCE_PERCENTAGE=${A4TolerancePercentage}
         ContainerEnvEntry19: MAX_OBJECT_NUMBER=5000
         # Messaging configuration
         ContainerEnvEntry20: PAC_MESSAGING_ENABLED=false
