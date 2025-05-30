@@ -77,9 +77,7 @@ Parameters:
     Default: PnSsKmsBucket
   PnPdfNormalizerTransformationHandlerLambdaName:
     Type: String
-    Description: Nome della Lambda function che gestisce i messaggi in entrata dalla
-      coda pn-pdf-normalizer-transformation-queue
-    Default: NormalizerTransformationHandler
+    Description: Nome della Lambda function che gestisce i messaggi in entrata dalla coda pn-pdf-normalizer-transformation-queue
   PnPdfNormalizerTransformationQueueName:
     Type: String
     Description: Queue name for the normalization queue
@@ -231,7 +229,6 @@ Parameters:
     Description: Log Group name for doc-worker-service (from storage stack)
   PnPdfNormalizerTransformationCallbackLambdaName:
     Type: String
-    Default: NormalizerTransformationCallback
   PnPdfNormalizerTransformationCallbackReservedConcurrency:
     Type: Number
     Default: 5
@@ -262,7 +259,6 @@ Parameters:
     Default: 200
   PnPdfNormalizerWorkerServiceMetricsCollectorLambdaName:
     Type: String
-    Default: WorkerServiceMetricsCollector
   PnPdfNormalizerWorkerServiceMetricsCollectorMemorySize:
     Type: Number
     Default: 128
@@ -427,7 +423,7 @@ Resources:
   PnPdfNormalizerTransformationCallbackLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationCallbackLambdaName}
+      FunctionName: !Sub ${PnPdfNormalizerTransformationCallbackLambdaName}
       Runtime: nodejs22.x
       Handler: index.handler
       Role: !GetAtt PnPdfNormalizerTransformationCallbackLambdaRole.Arn
@@ -439,14 +435,14 @@ Resources:
       ReservedConcurrentExecutions: !Ref PnPdfNormalizerTransformationCallbackReservedConcurrency
       Tags:
         - Key: Name
-          Value: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationCallbackLambdaName}
+          Value: !Sub {PnPdfNormalizerTransformationCallbackLambdaName}
         - Key: Environment
           Value: !Ref EnvType
 
   PnPdfNormalizerTransformationHandlerLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationHandlerLambdaName}
+      FunctionName: !Sub ${PnPdfNormalizerTransformationHandlerLambdaName}
       Runtime: nodejs22.x
       Handler: index.handler
       Role: !GetAtt PnPdfNormalizerTransformationHandlerLambdaRole.Arn
@@ -482,14 +478,14 @@ Resources:
           NORMALIZER_MARGINS: !Sub ${NormalizerMargins}
       Tags:
         - Key: Name
-          Value: !Sub pn-pdf-normalizer-integration-${PnPdfNormalizerTransformationHandlerLambdaName}
+          Value: !Sub ${PnPdfNormalizerTransformationHandlerLambdaName}
         - Key: Environment
           Value: !Ref EnvType
 
   PnPdfNormalizerWorkerServiceMetricsCollectorLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${ProjectName}-pdf-normalizer-integration-${PnPdfNormalizerWorkerServiceMetricsCollectorLambdaName}
+      FunctionName: !Sub ${PnPdfNormalizerWorkerServiceMetricsCollectorLambdaName}
       Handler: index.handler
       Role: !GetAtt PnPdfNormalizerWorkerServiceMetricsCollectorLambdaRole.Arn
       Code:
@@ -528,7 +524,7 @@ Resources:
           HTTP_TIMEOUT_MS: !Ref PnPdfNormalizerWorkerServiceMetricsCollectorHttpTimeoutMs
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-pdf-normalizer-integration-${PnPdfNormalizerWorkerServiceMetricsCollectorLambdaName}
+          Value: !Sub ${PnPdfNormalizerWorkerServiceMetricsCollectorLambdaName}
         - Key: Environment
           Value: !Ref EnvType
 
