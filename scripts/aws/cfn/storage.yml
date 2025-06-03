@@ -267,6 +267,6 @@ Outputs:
   PnPdfNormalizerTransformationCallbackLambdaName:
     Value: !Sub "${ProjectName}-pdf-normalizer-integration-NormalizerTransformationCallback"
 
-  PnPdfNormalizerWorkerMetricsCollectorLambdaName:
+  PnPdfNormalizerWorkerServiceMetricsCollectorLambdaName:
     Value: !Sub "${ProjectName}-pdf-normalizer-integration-WorkerServiceMetricsCollector"
 
