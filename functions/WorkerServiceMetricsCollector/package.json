@@ -19,7 +19,6 @@
     "metrics"
   ],
   "license": "ISC",
-  "dependencies": {},
   "devDependencies": {
     "@aws-sdk/client-cloudwatch": "^3.583.0",
     "aws-sdk-client-mock": "^2.2.0",
