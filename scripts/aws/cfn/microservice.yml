@@ -423,7 +423,7 @@ Resources:
   PnPdfNormalizerTransformationCallbackLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${PnPdfNormalizerTransformationCallbackLambdaName}
+      FunctionName: !Ref PnPdfNormalizerTransformationCallbackLambdaName
       Runtime: nodejs22.x
       Handler: index.handler
       Role: !GetAtt PnPdfNormalizerTransformationCallbackLambdaRole.Arn
@@ -435,14 +435,14 @@ Resources:
       ReservedConcurrentExecutions: !Ref PnPdfNormalizerTransformationCallbackReservedConcurrency
       Tags:
         - Key: Name
-          Value: !Sub {PnPdfNormalizerTransformationCallbackLambdaName}
+          Value: !Ref PnPdfNormalizerTransformationCallbackLambdaName
         - Key: Environment
           Value: !Ref EnvType
 
   PnPdfNormalizerTransformationHandlerLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${PnPdfNormalizerTransformationHandlerLambdaName}
+      FunctionName: !Ref PnPdfNormalizerTransformationHandlerLambdaName
       Runtime: nodejs22.x
       Handler: index.handler
       Role: !GetAtt PnPdfNormalizerTransformationHandlerLambdaRole.Arn
@@ -478,14 +478,14 @@ Resources:
           NORMALIZER_MARGINS: !Sub ${NormalizerMargins}
       Tags:
         - Key: Name
-          Value: !Sub ${PnPdfNormalizerTransformationHandlerLambdaName}
+          Value: !Ref PnPdfNormalizerTransformationHandlerLambdaName
         - Key: Environment
           Value: !Ref EnvType
 
   PnPdfNormalizerWorkerServiceMetricsCollectorLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${PnPdfNormalizerWorkerServiceMetricsCollectorLambdaName}
+      FunctionName: !Ref PnPdfNormalizerWorkerServiceMetricsCollectorLambdaName
       Handler: index.handler
       Role: !GetAtt PnPdfNormalizerWorkerServiceMetricsCollectorLambdaRole.Arn
       Code:
@@ -524,7 +524,7 @@ Resources:
           HTTP_TIMEOUT_MS: !Ref PnPdfNormalizerWorkerServiceMetricsCollectorHttpTimeoutMs
       Tags:
         - Key: Name
-          Value: !Sub ${PnPdfNormalizerWorkerServiceMetricsCollectorLambdaName}
+          Value: !Ref PnPdfNormalizerWorkerServiceMetricsCollectorLambdaName
         - Key: Environment
           Value: !Ref EnvType
 
