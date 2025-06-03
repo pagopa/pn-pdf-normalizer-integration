@@ -3,7 +3,7 @@
 const { CloudWatchClient, PutMetricDataCommand } = require("@aws-sdk/client-cloudwatch");
 
 const cloudWatchClient = new CloudWatchClient({});
-const HTTP_TIMEOUT_MS = process.env.HTTP_TIMEOUT_MS || 5000;
+const HTTP_TIMEOUT_MS = Number(process.env.HTTP_TIMEOUT_MS) || 5000;
 
 /**
  * Fetches metrics from the given URL using native fetch.
@@ -13,7 +13,7 @@ const HTTP_TIMEOUT_MS = process.env.HTTP_TIMEOUT_MS || 5000;
 async function fetchMetrics(url) {
   const response = await fetch(url, {
     method: 'GET',
-    signal: AbortSignal.timeout(Number(HTTP_TIMEOUT_MS)),
+    signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
     headers: {
       'Accept': 'text/plain',
     },
