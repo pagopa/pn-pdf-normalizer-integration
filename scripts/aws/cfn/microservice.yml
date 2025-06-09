@@ -280,6 +280,24 @@ Parameters:
   PnPdfNormalizerWorkerServiceMetricsCollectorHttpTimeoutMs:
     Type: Number
     Default: 5000
+  #LOG LEVEL SETTINGS
+  RemediationLogLevel:
+    Type: String
+    Default: INFO
+    Description: Log level for Remediation microservice.
+  WorkerLogLevel:
+    Type: String
+    Default: INFO
+    Description: Log level for Worker microservice.
+  WorkerRootLogLevel:
+    Type: String
+    Default: INFO
+    Description: Root log level for Worker microservice.
+  WorkerHibernateLogLevel:
+    Type: String
+    Default: INFO
+    Description: Hibernate log level for Worker microservice.
+  
 
 Conditions:
   IsRemediationScalingEnabled: !Not
@@ -746,7 +764,7 @@ Resources:
         ContainerEnvEntry15: TOMCAT_MAX_CONNECTION=300
         ContainerEnvEntry16: TOMCAT_ACCEPT_COUNT=100
         # Logging configuration
-        ContainerEnvEntry17: LOG_LEVEL=INFO
+        ContainerEnvEntry17: LOG_LEVEL=${RemediationLogLevel}
         # Messaging configuration
         ContainerEnvEntry18: PAC_MESSAGING_ENABLED=false
         # Callback configuration
@@ -800,10 +818,10 @@ Resources:
         ContainerEnvEntry11: HIKARI_INITIALIZATION_FAIL_TIMEOUT=1
         # JPA/Hibernate configuration
         ContainerEnvEntry12: SHOW_SQL=false
-        ContainerEnvEntry13: HIBERNATE_LOG_LEVEL=DEBUG
+        ContainerEnvEntry13: HIBERNATE_LOG_LEVEL=${WorkerHibernateLogLevel}
         # Logging configuration
-        ContainerEnvEntry14: ROOT_LOG_LEVEL=INFO
-        ContainerEnvEntry15: LOG_LEVEL=INFO
+        ContainerEnvEntry14: ROOT_LOG_LEVEL=${WorkerRootLogLevel}
+        ContainerEnvEntry15: LOG_LEVEL=${WorkerLogLevel}
         # Worker configuration
         ContainerEnvEntry16: SERVICE_NAME=workerservice
         ContainerEnvEntry17: CRON=*/10 * * * * ?
