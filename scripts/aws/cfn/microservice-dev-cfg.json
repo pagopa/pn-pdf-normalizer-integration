@@ -1,35 +1,20 @@
 {
   "Parameters": {
-    "BeyondocPdfRemediationImageUri": "public.ecr.aws/docker/library/tomcat:9.0.104-jdk21-corretto",
-    "BeyondocWorkerImageUri": "public.ecr.aws/docker/library/tomcat:9.0.104-jdk21-corretto",
-
-    "NormalizedPDFHookReservedConcurrency": "1",
+    "BeyondocPdfRemediationImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/pdf-remediation-service:main-1.0.12",
+    "BeyondocWorkerImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/worker-service:main-1.0.11",
 
     "BeyondocPdfRemediationCpu": "1024",
     "BeyondocPdfRemediationMemory": "2GB",
+    "BeyondocPdfRemediationMinTasks": "1",
+    "BeyondocPdfRemediationMaxTasks": "4",
+
     "BeyondocWorkerCpu": "1024",
     "BeyondocWorkerMemory": "2GB",
-
-    "RemediationScalingStrategy": "REST-API",
-    "BeyondocPdfRemediationMinTasks": "1",
-    "BeyondocPdfRemediationMaxTasks": "1",
-    "RemediationScalingThresholdRequests": "50",
-
-    "WorkerScalingStrategy": "CUSTOM",
     "BeyondocWorkerMinTasks": "1",
-    "BeyondocWorkerMaxTasks": "1",
-    "WorkerCpuScalingThreshold": "80",
-    "WorkerMemoryScalingThreshold": "80",
-    "EcsScalingEvaluationPeriods": "2",
+    "BeyondocWorkerMaxTasks": "8",
+    "WorkerLoadPercentageScalingThreshold": "50",
+    "A4TolerancePercentage": "200",
 
-    "BeyondocPdfRemediationDisableOtel": "true",
-    "BeyondocWorkerDisableOtel": "true",
-    "BeyondocPdfRemediationMountEfs": "false",
-    "BeyondocWorkerMountEfs": "false",
-
-    "LambdaAlbPriority": "100",
-    "RemediationAlbPriority": "110",
-
-    "EcsMemoryAlarmThreshold": "90"
+    "NormalizerMargins" : "0"
   }
 }
