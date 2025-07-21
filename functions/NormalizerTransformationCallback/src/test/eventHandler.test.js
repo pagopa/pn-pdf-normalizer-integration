@@ -157,4 +157,32 @@ describe("NormalizerTransformationCallback", () => {
     });
     expect(res.statusCode).to.equal(400);
   });
+
+  it("rispondiamo 200 se l'oggetto non è in staging ma è presente in main ", async () => {
+    let putCalled=false;
+    s3Mock
+        .on(GetObjectTaggingCommand).rejects({
+      code: 'NoSuchKey',
+      message: 'The specified key does not exist.'
+    })
+        .on(HeadObjectCommand).resolves({})
+        .on(PutObjectTaggingCommand).callsFake(()=>{
+      putCalled=true;
+      return {};
+    });
+
+    const lambda = loadLambda();
+
+    const res = await lambda.handleEvent({
+      body: JSON.stringify({
+        checkResult: true,
+        mainErrorReason: "",
+        pdffileName: "s3://openshift-pam-bucket/PAC/test.pdf",
+        correlationId: "test-id"
+      }),
+      messageId: "msg-dup"
+    });
+    expect(res.statusCode).to.equal(200);
+    expect(putCalled).to.be.false;
+  });
 });
