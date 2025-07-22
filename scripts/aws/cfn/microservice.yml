@@ -75,7 +75,7 @@ Parameters:
   PnSsMainBucketPrefix:
     Type: String
     Description: Base prefix for SafeStorage main bucket name
-    Default: pn-ss-storage-safestorage
+    Default: pn-safestorage
   PnSsKmsKeyTagValue:
     Type: String
     Default: PnSsKmsBucket
