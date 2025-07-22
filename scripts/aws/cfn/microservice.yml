@@ -72,6 +72,10 @@ Parameters:
     Type: String
     Description: Base prefix for SafeStorage bucket name
     Default: pn-safestorage-staging
+  PnSsMainBucketPrefix:
+    Type: String
+    Description: Base prefix for SafeStorage main bucket name
+    Default: pn-ss-storage-safestorage
   PnSsKmsKeyTagValue:
     Type: String
     Default: PnSsKmsBucket
@@ -451,6 +455,9 @@ Resources:
       MemorySize: !Ref PnPdfNormalizerTransformationCallbackMemorySize
       Timeout: !Ref PnPdfNormalizerTransformationCallbackTimeout
       ReservedConcurrentExecutions: !Ref PnPdfNormalizerTransformationCallbackReservedConcurrency
+      Environment:
+        Variables:
+          - S3_MAIN_BUCKET: !Sub ${PnSsMainBucketPrefix}-${AWS::Region}-${AWS::AccountId}
       Tags:
         - Key: Name
           Value: !Ref PnPdfNormalizerTransformationCallbackLambdaName

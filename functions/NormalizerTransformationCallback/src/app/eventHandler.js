@@ -7,7 +7,7 @@ const {
 } = require("@aws-sdk/client-s3");
 
 const s3 = new S3Client({});
-const MAIN_BUCKET="mainBucket";
+const MAIN_BUCKET=process.env.S3_MAIN_BUCKET;
 
 exports.handleEvent = async function (event) {
     let bucketName,fileKey;
@@ -95,7 +95,7 @@ function parseS3Uri(uri) {
     throw new Error(`Invalid S3 URI: ${uri}`);
   }
 
-  const [, bucketName, fileKey] = match;
+  const [ _, bucketName, fileKey] = match;
   return { bucketName, fileKey };
 }
 
