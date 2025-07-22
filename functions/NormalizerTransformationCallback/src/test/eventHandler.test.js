@@ -142,6 +142,10 @@ describe("NormalizerTransformationCallback", () => {
     s3Mock.on(GetObjectTaggingCommand).rejects({
       code: 'NoSuchKey',
       message: 'The specified key does not exist.'
+    })
+        .on(HeadObjectCommand).rejects({
+      code: "NotFound",
+      message: "Object not found in main bucket."
     });
 
     const lambda = loadLambda();
