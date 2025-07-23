@@ -457,7 +457,7 @@ Resources:
       ReservedConcurrentExecutions: !Ref PnPdfNormalizerTransformationCallbackReservedConcurrency
       Environment:
         Variables:
-          - S3_MAIN_BUCKET: !Sub ${PnSsMainBucketPrefix}-${AWS::Region}-${AWS::AccountId}
+          S3_MAIN_BUCKET: !Sub ${PnSsMainBucketPrefix}-${AWS::Region}-${AWS::AccountId}
       Tags:
         - Key: Name
           Value: !Ref PnPdfNormalizerTransformationCallbackLambdaName
