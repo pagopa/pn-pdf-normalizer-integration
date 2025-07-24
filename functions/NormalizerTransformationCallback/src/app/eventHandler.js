@@ -58,7 +58,6 @@ exports.handleEvent = async function (event) {
             statusCode: 200,
         };
     } catch (error) {
-        console.error("ERROR: ", error);
         const errorCode = error?.code || error?.Code || error?.name;
         if (errorCode === 'NoSuchKey'){
             try{
@@ -73,7 +72,8 @@ exports.handleEvent = async function (event) {
                 if (e.code === 'NotFound' || e.code === "NoSuchKey"){
                     return createJsonResponse(400,e.message)
                 }
-                throw e;
+                console.error("Unexpected error during HeadObject fallback: ", e);
+                return createJsonResponse(500,e.message);
             }
         }
 
