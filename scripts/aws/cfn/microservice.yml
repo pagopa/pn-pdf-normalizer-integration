@@ -362,6 +362,8 @@ Resources:
             Resource:
               - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
               - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}/*
+              - !Sub arn:aws:s3:::${PnSsMainBucketPrefix}-${AWS::Region}-${AWS::AccountId}
+              - !Sub arn:aws:s3:::${PnSsMainBucketPrefix}-${AWS::Region}-${AWS::AccountId}/*
           - Sid: AllowKMSAccessSafeStorage
             Effect: Allow
             Action:
