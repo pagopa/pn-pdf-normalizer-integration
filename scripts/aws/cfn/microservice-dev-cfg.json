@@ -1,7 +1,7 @@
 {
   "Parameters": {
-    "BeyondocPdfRemediationImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/pdf-remediation-service:main-1.0.16",
-    "BeyondocWorkerImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/worker-service:main-1.0.12",
+    "BeyondocPdfRemediationImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/pdf-remediation-service:main-1.1.3",
+    "BeyondocWorkerImageUri": "911845998067.dkr.ecr.eu-south-1.amazonaws.com/beyondoc/worker-service:main-1.1.2",
 
     "BeyondocPdfRemediationCpu": "1024",
     "BeyondocPdfRemediationMemory": "2GB",
