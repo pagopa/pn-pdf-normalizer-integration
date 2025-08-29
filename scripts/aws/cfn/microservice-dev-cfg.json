@@ -15,6 +15,6 @@
     "WorkerLoadPercentageScalingThreshold": "50",
     "A4TolerancePercentage": "200",
 
-    "NormalizerMargins" : "0"
+    "NormalizerMargins" : "1"
   }
 }
