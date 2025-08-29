@@ -72,6 +72,10 @@ Parameters:
     Type: String
     Description: Base prefix for SafeStorage bucket name
     Default: pn-safestorage-staging
+  PnSsMainBucketPrefix:
+    Type: String
+    Description: Base prefix for SafeStorage main bucket name
+    Default: pn-safestorage
   PnSsKmsKeyTagValue:
     Type: String
     Default: PnSsKmsBucket
@@ -358,6 +362,8 @@ Resources:
             Resource:
               - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}
               - !Sub arn:aws:s3:::${PnSsStagingBucketPrefix}-${AWS::Region}-${AWS::AccountId}/*
+              - !Sub arn:aws:s3:::${PnSsMainBucketPrefix}-${AWS::Region}-${AWS::AccountId}
+              - !Sub arn:aws:s3:::${PnSsMainBucketPrefix}-${AWS::Region}-${AWS::AccountId}/*
           - Sid: AllowKMSAccessSafeStorage
             Effect: Allow
             Action:
@@ -451,6 +457,9 @@ Resources:
       MemorySize: !Ref PnPdfNormalizerTransformationCallbackMemorySize
       Timeout: !Ref PnPdfNormalizerTransformationCallbackTimeout
       ReservedConcurrentExecutions: !Ref PnPdfNormalizerTransformationCallbackReservedConcurrency
+      Environment:
+        Variables:
+          S3_MAIN_BUCKET: !Sub ${PnSsMainBucketPrefix}-${AWS::Region}-${AWS::AccountId}
       Tags:
         - Key: Name
           Value: !Ref PnPdfNormalizerTransformationCallbackLambdaName
@@ -749,8 +758,8 @@ Resources:
         ContainerEnvEntry1: !Sub DB_URL=jdbc:postgresql://${RdsEndpointAddress}:${RdsPort}/${RdsDbName}
         ContainerEnvEntry2: !Sub DB_USERNAME=${SvcUsername}
         ContainerEnvEntry3: DB_DRIVER_CLASS=org.postgresql.Driver
-        ContainerEnvEntry4: HIKARI_MAX_POOL_SIZE=5
-        ContainerEnvEntry5: HIKARI_MINIMUM_IDLE=2
+        ContainerEnvEntry4: HIKARI_MAX_POOL_SIZE=50
+        ContainerEnvEntry5: HIKARI_MINIMUM_IDLE=20
         ContainerEnvEntry6: HIKARI_IDLE_TIMEOUT=300000
         ContainerEnvEntry7: HIKARI_MAX_LIFETIME=600000
         ContainerEnvEntry8: HIKARI_CONNECTION_TIMEOUT=30000

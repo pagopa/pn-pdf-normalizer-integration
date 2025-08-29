@@ -2,19 +2,24 @@
 const {
     S3Client,
     GetObjectTaggingCommand,
-    PutObjectTaggingCommand
+    PutObjectTaggingCommand,
+    HeadObjectCommand
 } = require("@aws-sdk/client-s3");
 
 const s3 = new S3Client({});
+const MAIN_BUCKET=process.env.S3_MAIN_BUCKET;
 
 exports.handleEvent = async function (event) {
+    let bucketName,fileKey;
+
     try {
+
         console.log("Received event:", JSON.stringify(event));
 
         const bodyData = JSON.parse(event.body);
 
         const checkResult = bodyData.checkResult;
-        const { bucketName, fileKey } = parseS3Uri(bodyData.pdffileName);
+        ({ bucketName, fileKey } = parseS3Uri(bodyData.pdffileName));
 
         console.log("Normalization CheckResult:", checkResult);
 
@@ -53,17 +58,31 @@ exports.handleEvent = async function (event) {
             statusCode: 200,
         };
     } catch (error) {
-        console.error("ERROR: ", error);
         const errorCode = error?.code || error?.Code || error?.name;
+        if (errorCode === 'NoSuchKey'){
+            try{
+                await s3.send(new HeadObjectCommand({
+                    Bucket: MAIN_BUCKET,
+                    Key: fileKey
+                }));
 
-        var statusCode;
-        var responseBody = {};
+                console.log(`Duplicate callback: file ${fileKey} already in ${MAIN_BUCKET}`)
+                return createJsonResponse(200,`Already processed: ${fileKey}`)
+            } catch (e){
+                if (e.code === 'NotFound' || e.code === "NoSuchKey"){
+                    return createJsonResponse(400,e.message)
+                }
+                console.error("Unexpected error during HeadObject fallback: ", e);
+                return createJsonResponse(500,e.message);
+            }
+        }
 
-        if (errorCode === 'NoSuchBucket' || errorCode === 'NoSuchKey') {
+        if (errorCode === 'NoSuchBucket') {
             return createJsonResponse(400, error.message);
         } else {
             return createJsonResponse(500, "Error during normalization processing: " + error.message);
         }
+
     }
 
 };
@@ -76,7 +95,7 @@ function parseS3Uri(uri) {
     throw new Error(`Invalid S3 URI: ${uri}`);
   }
 
-  const [, bucketName, fileKey] = match;
+  const [ _, bucketName, fileKey] = match;
   return { bucketName, fileKey };
 }
 
