@@ -55,7 +55,6 @@ Parameters:
     NoEcho: true
   RdsEngineVersion:
     Type: String
-    Default: '14.12'
   RdsDbClusterFamily:
     Type: String
     Default: aurora-postgresql14

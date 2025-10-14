@@ -1,6 +1,7 @@
 {
   "Parameters": {
     "RdsMinACU": "0.5",
-    "RdsMaxACU" : "8"
+    "RdsMaxACU" : "8",
+    "RdsEngineVersion": "14.18"
   }
 }
