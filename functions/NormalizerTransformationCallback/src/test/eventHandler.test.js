@@ -189,4 +189,116 @@ describe("NormalizerTransformationCallback", () => {
     expect(res.statusCode).to.equal(200);
     expect(putCalled).to.be.false;
   });
+
+  it("se Transformation-NORMALIZATION è inProgress e checkResult=true si applica OK", async () => {
+    s3Mock
+        .on(GetObjectTaggingCommand).resolves({
+          TagSet:[{ Key: "Transformation-NORMALIZATION", Value: "inProgress" }]
+        })
+        .on(PutObjectTaggingCommand).callsFake(cmd => {
+          capturedTagging = cmd;
+          return {};
+        });
+
+    const lambda = loadLambda();
+    const res = await lambda.handleEvent({
+      body: JSON.stringify({
+        checkResult: true,
+        mainErrorReason: "",
+        pdffileName: FILE_URI,
+        correlationId: "inprogress-ok"
+      }),
+      messageId: "msg-inprogress-ok"
+     });
+
+     expect(res.statusCode).to.equal(200);
+     expect(capturedTagging).to.not.be.undefined;
+     expect(capturedTagging.Tagging.TagSet[0].Value).to.equal("OK");
+   });
+
+   it("se Transformation-NORMALIZATION è inProgress e checkResult=false viene applicato ERROR", async () => {
+     s3Mock
+         .on(GetObjectTaggingCommand).resolves({
+           TagSet:[{ Key: "Transformation-NORMALIZATION", Value: "inProgress" }]
+         })
+         .on(PutObjectTaggingCommand).callsFake(cmd => {
+           capturedTagging = cmd;
+           return {};
+         });
+
+     const lambda = loadLambda();
+     const res = await lambda.handleEvent({
+       body: JSON.stringify({
+         checkResult: false,
+         mainErrorReason: "",
+         pdffileName: FILE_URI,
+         correlationId: "inprogress-error"
+       }),
+       messageId: "msg-inprogress-error"
+     });
+
+     expect(res.statusCode).to.equal(200);
+     expect(capturedTagging).to.not.be.undefined;
+     expect(capturedTagging.Tagging.TagSet[0].Value).to.equal("ERROR");
+   });
+
+   it("gestisce correttamente chiamate multiple alla stessa callback", async () => {
+     let currentTagSet = [];
+
+     s3Mock
+       .on(GetObjectTaggingCommand)
+       .callsFake(() => {
+         return { TagSet: currentTagSet };
+       })
+       .on(PutObjectTaggingCommand)
+       .callsFake(cmd => {
+         currentTagSet = cmd.Tagging.TagSet;
+         return {};
+       });
+
+     const lambda = loadLambda();
+
+     // 1 callback: checkResult = true => dovrebbe creare il tag OK
+     let res = await lambda.handleEvent({
+       body: JSON.stringify({
+         checkResult: true,
+         pdffileName: FILE_URI,
+         correlationId: "multi-1"
+       }),
+       messageId: "msg-1"
+     });
+
+     expect(res.statusCode).to.equal(200);
+     expect(currentTagSet[0].Key).to.equal("Transformation-NORMALIZATION");
+     expect(currentTagSet[0].Value).to.equal("OK");
+
+     // 2 callback: checkResult = false => non deve modificare il tag perché già OK
+     res = await lambda.handleEvent({
+       body: JSON.stringify({
+         checkResult: false,
+         pdffileName: FILE_URI,
+         correlationId: "multi-2"
+       }),
+       messageId: "msg-2"
+     });
+
+     expect(res.statusCode).to.equal(200);
+     expect(currentTagSet[0].Value).to.equal("OK"); // il tag rimane OK
+
+     // 3 callback: se mettiamo inProgress, dovrebbe sovrascrivere
+     currentTagSet[0].Value = "inProgress";
+
+     res = await lambda.handleEvent({
+       body: JSON.stringify({
+         checkResult: false,
+         pdffileName: FILE_URI,
+         correlationId: "multi-3"
+       }),
+       messageId: "msg-3"
+     });
+
+     expect(res.statusCode).to.equal(200);
+     expect(currentTagSet[0].Value).to.equal("ERROR"); // il tag viene aggiornato
+   });
+
 });

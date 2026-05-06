@@ -35,11 +35,6 @@ const processSqsRecord = async (record, beyonDocApiUrl, margins, batchItemFailur
       return;
     }
 
-    if (await hasMultipleVersions(bucketName, fileKey)) {
-      console.warn("File " + fileKey + " has multiple versions. Skipping operation.");
-      return;
-    }
-
     const inputPath = "s3://" + bucketName + "/" + fileKey;
     await callBeyonDocApi(beyonDocApiUrl, inputPath, margins);
 
@@ -106,15 +101,4 @@ const callBeyonDocApi = async (beyonDocApiUrl, inputPath, margins) => {
     req.end();
   });
 };
-
-async function hasMultipleVersions(bucketName, key) {
-  const command = new ListObjectVersionsCommand({
-    Bucket: bucketName,
-    Prefix: key,
-  });
-
-  const response = await s3.send(command);
-  const versions = response.Versions?.filter(version => version.Key === key) || [];
-  return versions.length > 1;
-}
 
