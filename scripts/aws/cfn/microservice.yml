@@ -301,7 +301,9 @@ Parameters:
     Type: String
     Default: INFO
     Description: Hibernate log level for Worker microservice.
-  
+  ParentMicroserviceName:
+    Type: String
+    Default: pn-pdf-normalizer-integration
 
 Conditions:
   IsRemediationScalingEnabled: !Not
@@ -734,6 +736,7 @@ Resources:
       TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/ecs-service.yaml
       Parameters:
         MicroServiceUniqueName: pn-pdf-normalizer-remediation
+        ParentMicroserviceName: !Ref ParentMicroserviceName
         ECSClusterName: !Ref PdfRasterECSClusterName
         ContainerImageURI: !Ref BeyondocPdfRemediationImageUri
         CpuValue: !Ref BeyondocPdfRemediationCpu
@@ -793,6 +796,7 @@ Resources:
       TemplateURL: !Sub ${TemplateBucketBaseUrl}/fragments/ecs-service.yaml
       Parameters:
         MicroServiceUniqueName: pn-pdf-normalizer-worker
+        ParentMicroserviceName: !Ref ParentMicroserviceName
         ECSClusterName: !Ref PdfRasterECSClusterName
         ContainerImageURI: !Ref BeyondocWorkerImageUri
         CpuValue: !Ref BeyondocWorkerCpu
