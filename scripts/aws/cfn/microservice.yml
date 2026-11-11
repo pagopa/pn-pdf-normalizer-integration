@@ -39,8 +39,6 @@ Parameters:
     Type: String
   PdfRasterVpcSubnets:
     Type: String
-  PdfRasterDefaultSecurityGroup:
-    Type: String
   ServiceEndpointToPdfRaster:
     Type: String
   RdsEndpointAddress:
@@ -650,9 +648,6 @@ Resources:
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0
-      SecurityGroupIngress:
-        - IpProtocol: '-1'
-          SourceSecurityGroupId: !Ref PdfRasterDefaultSecurityGroup
       Tags:
         - Key: Name
           Value: !Sub pn-pdf-normalizer-integration-EcsPdfNormalizerDefault-sg
